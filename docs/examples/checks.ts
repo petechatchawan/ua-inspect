@@ -10,6 +10,7 @@ import {
     isIPadOS,
     isInApp,
     isWebView,
+    label,
     labels,
     type UAInfo,
 } from '../../src/index';
@@ -27,7 +28,8 @@ export const recipes = {
     ipad: isIPad(info),
     ipadOS: isIPadOS(info),
     modernChrome: is(info, { browser: 'chrome' }) && atLeast(info.browser.version, '130'),
-    browserLabel: info.browser.name ? labels.browser[info.browser.name] : 'Unknown',
+    browserLabel: label('browser', info.browser.name),
+    vendorLabel: labels.vendor.samsung,
     summary: describe(info),
     inApp: isInApp(info),
     webView: isWebView(info),

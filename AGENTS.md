@@ -25,18 +25,18 @@ npm_config_cache=/tmp/ua-inspect-npm-cache npm run check
 
 ## Layout
 
-| Path                  | Role                                                               |
-| --------------------- | ------------------------------------------------------------------ |
-| `src/core/scan.ts`    | One-pass tokenizer and `readVersion`                               |
-| `src/core/match.ts`   | `compileMatcher`, `pick`, `mergeVersion`, `strongestVersion`       |
-| `src/core/resolve.ts` | Dimension resolution and edge cases                                |
-| `src/core/device.ts`  | Model and vendor extraction                                        |
-| `src/catalog/*`       | Data rows: browsers, OS, clients, contexts, devices, vendors, CPUs |
-| `src/index.ts`        | Root exports: `parse`, `is`, `atLeast`, predicates, `labels`       |
-| `test/data/*`         | Real captured User-Agent strings                                   |
-| `test/unit/*`         | Unit, contract, and fixture tests                                  |
-| `docs/examples/*`     | Compile-checked snippets                                           |
-| `apps/playground/*`   | Vite playground that consumes the packed tarball                   |
+| Path                  | Role                                                                              |
+| --------------------- | --------------------------------------------------------------------------------- |
+| `src/core/scan.ts`    | One-pass tokenizer and `readVersion`                                              |
+| `src/core/match.ts`   | `compileMatcher`, `pick`, `mergeVersion`, `strongestVersion`                      |
+| `src/core/resolve.ts` | Dimension resolution and edge cases                                               |
+| `src/core/device.ts`  | Model and vendor extraction                                                       |
+| `src/catalog/*`       | Data rows: browsers, OS, clients, contexts, devices, vendors, CPUs                |
+| `src/index.ts`        | Root exports: `parse`, `is`, `atLeast`, `describe`, `label`, predicates, `labels` |
+| `test/data/*`         | Real captured User-Agent strings                                                  |
+| `test/unit/*`         | Unit, contract, and fixture tests                                                 |
+| `docs/examples/*`     | Compile-checked snippets                                                          |
+| `apps/playground/*`   | Vite playground that consumes the packed tarball                                  |
 
 ## Rules
 

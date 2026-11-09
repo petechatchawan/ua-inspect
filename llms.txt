@@ -7,7 +7,7 @@ Install with `npm install ua-inspect`.
 ## Imports
 
 ```ts
-import { atLeast, describe, is, isBot, isIPad, isIPadOS, isInApp, isWebView, labels, parse } from 'ua-inspect';
+import { atLeast, describe, is, isBot, isIPad, isIPadOS, isInApp, isWebView, label, labels, parse } from 'ua-inspect';
 import { parseRequest } from 'ua-inspect/server';
 import { detect } from 'ua-inspect/browser';
 ```
@@ -71,6 +71,7 @@ if (is(info, { app: 'line' })) { /* LINE in-app browser or LIFF */ }
 
 // One-line summary for logs or UI.
 describe(info); // 'Google Chrome 150.0.0.0 on Windows 10 (Desktop)'
+label('browser', info.browser.name); // 'Google Chrome' or 'Unknown'
 
 // Host context.
 if (isInApp(info)) { /* in-app browser or mini-app */ }

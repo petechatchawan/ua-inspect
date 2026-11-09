@@ -12,7 +12,8 @@ export {
     isWebView,
 } from './check';
 export type { Query } from './check';
-export { describe, labels } from './labels';
+export { describe, label, labels } from './labels';
+export type { LabelKind } from './labels';
 export type {
     AppId,
     BrowserFamily,

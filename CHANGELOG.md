@@ -2,6 +2,24 @@
 
 All notable changes to `ua-inspect` are documented in this file.
 
+## 1.5.0 — 2026-11-09
+
+Adds a null-safe label helper, a Thai quickstart, and compile-checked Hono and Fastify recipes.
+
+### Added
+
+- `label(kind, id, fallback = 'Unknown')` returns the display name for an id, or the fallback when the id is missing or unknown. It is exported from the root and from `ua-inspect/labels`.
+- [docs/th-quickstart.md](docs/th-quickstart.md): a Thai quickstart covering parsing, queries, requests, the browser adapter, LINE, and the common traps.
+- Compile-checked Hono and Fastify recipes under `docs/examples/frameworks`. The frameworks are dev dependencies only.
+
+### Changed
+
+- CI now tests Node.js 18, 20, 22, and 24, and uses `actions/checkout@v6` and `actions/setup-node@v6`.
+
+### Notes
+
+- Catalog Tier 2 moves to `1.6.0` because it needs real captured User-Agent strings. The package still has no runtime dependencies.
+
 ## 1.4.0 — 2026-11-09
 
 Adds one-line result formatting and host-context helpers, and closes the remaining audit items.

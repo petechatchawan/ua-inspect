@@ -6,6 +6,7 @@ import {
     isIPadOS,
     isInApp,
     isWebView,
+    label,
     labels,
     parse,
     type BrowserId,
@@ -33,7 +34,8 @@ const headers: HeaderRecord = { 'user-agent': info.ua };
 const fromHeaders: UAInfo = parseRequest(headers);
 const options: DetectOptions = { highEntropy: false };
 const detected: Promise<UAInfo> = detect(options);
-const label: string = info.browser.name ? labels.browser[info.browser.name] : 'Unknown';
+const browserLabel: string = label('browser', info.browser.name);
+const rawLabel: string | null = info.browser.name ? labels.browser[info.browser.name] : null;
 
 void [
     browserName,
@@ -45,6 +47,8 @@ void [
     inApp,
     webView,
     summary,
+    browserLabel,
+    rawLabel,
     fromHeaders,
     detected,
     label,

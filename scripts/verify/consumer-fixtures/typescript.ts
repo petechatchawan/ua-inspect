@@ -6,6 +6,7 @@ import {
     isIPadOS,
     isInApp,
     isWebView,
+    label,
     labels,
     parse,
     type BrowserId,
@@ -23,7 +24,8 @@ if (is(result, { browser: 'chrome' })) {
 }
 const query: Query = { browser: ['chrome', 'edge'], os: 'android' };
 const id: BrowserId = 'samsung-internet';
-const label: string = labels.browser[id];
+const browserLabel: string = label('browser', id);
+const rawLabel: string = labels.browser[id];
 const version: Version | null = result.browser.version;
 const minor: number | null | undefined = version?.minor;
 const modern: boolean = atLeast(version, '130');
@@ -40,7 +42,8 @@ const detector: typeof detect = detect;
 void [
     isBot,
     query,
-    label,
+    browserLabel,
+    rawLabel,
     minor,
     modern,
     ipadOS,

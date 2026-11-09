@@ -76,13 +76,13 @@ if (info.browser.name && atLeast(info.browser.version, '130')) {
 
 ## Entry points
 
-| Use case                          | Import               | Main API                                                                      |
-| --------------------------------- | -------------------- | ----------------------------------------------------------------------------- |
-| Pure parsing and queries          | `ua-inspect`         | `parse()`, `is()`, `atLeast()`, `isBot()`, `describe()`, predicates, `labels` |
-| Queries only (smallest bundle)    | `ua-inspect/check`   | `is()`, `isBot()`, `isMobile()`, `isTablet()`, `isDesktop()`, `isIPad()`      |
-| HTTP request + Client Hints       | `ua-inspect/server`  | `parseRequest()`                                                              |
-| Current browser + runtime signals | `ua-inspect/browser` | `detect()`                                                                    |
-| Display names only                | `ua-inspect/labels`  | `labels`                                                                      |
+| Use case                          | Import               | Main API                                                                                 |
+| --------------------------------- | -------------------- | ---------------------------------------------------------------------------------------- |
+| Pure parsing and queries          | `ua-inspect`         | `parse()`, `is()`, `atLeast()`, `isBot()`, `describe()`, `label()`, predicates, `labels` |
+| Queries only (smallest bundle)    | `ua-inspect/check`   | `is()`, `isBot()`, `isMobile()`, `isTablet()`, `isDesktop()`, `isIPad()`                 |
+| HTTP request + Client Hints       | `ua-inspect/server`  | `parseRequest()`                                                                         |
+| Current browser + runtime signals | `ua-inspect/browser` | `detect()`                                                                               |
+| Display names only                | `ua-inspect/labels`  | `labels`                                                                                 |
 
 The root entry re-exports the query helpers and `labels`. Use the subpaths when you need only one part and want the smallest bundle.
 
@@ -200,11 +200,11 @@ info.device.vendor === 'samsung';
 Use ids for program logic. For a person, use `labels`:
 
 ```ts
-import { labels } from 'ua-inspect/labels';
+import { label, labels } from 'ua-inspect';
 
-const browserLabel = info.browser.name
-    ? labels.browser[info.browser.name] // 'Google Chrome'
-    : 'Unknown';
+label('browser', info.browser.name); // 'Google Chrome' or 'Unknown'
+label('os', null, 'n/a'); // 'n/a'
+labels.browser.chrome; // 'Google Chrome'
 labels.vendor.samsung; // 'Samsung'
 ```
 
@@ -674,7 +674,7 @@ High-entropy hints are an opt-in round trip to the browser, so request them only
 
 ## Framework recipes
 
-The Web API and Node header recipes are compiled in [docs/examples/server.ts](https://github.com/petechatchawan/ua-inspect/blob/master/docs/examples/server.ts). The framework snippets below use the same calls with each framework's own request type.
+The Web API, Node header, Hono, and Fastify recipes are compiled under [docs/examples](https://github.com/petechatchawan/ua-inspect/tree/master/docs/examples). The Next.js, Workers, and Express snippets use the same calls with their own request types.
 
 ### Next.js middleware
 
@@ -762,6 +762,7 @@ The package is new, so models have little prior training data for its API. Read 
 - [AGENTS.md](https://github.com/petechatchawan/ua-inspect/blob/master/AGENTS.md): repository layout, commands, and catalog rules for an agent working in this repo.
 - [CONTRIBUTING.md](https://github.com/petechatchawan/ua-inspect/blob/master/CONTRIBUTING.md): change checklist and semver policy.
 - [docs/backlog.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/backlog.md): known and planned work.
+- [docs/th-quickstart.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/th-quickstart.md): Thai quickstart.
 
 ## Trust boundary
 

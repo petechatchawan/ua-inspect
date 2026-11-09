@@ -56,6 +56,24 @@ export const labels: {
     context: CONTEXT_LABELS,
 };
 
+export type LabelKind = keyof typeof labels;
+
+/**
+ * Returns the display name for an id, or `fallback` when the id is missing or unknown.
+ *
+ * @example
+ * label('browser', info.browser.name); // 'Google Chrome' or 'Unknown'
+ */
+export function label(
+    kind: LabelKind,
+    id: string | null | undefined,
+    fallback = 'Unknown',
+): string {
+    if (id === null || id === undefined) return fallback;
+    const table = labels[kind] as Readonly<Record<string, string>>;
+    return table[id] ?? fallback;
+}
+
 function formatVersion(label: string, version: Version | null): string {
     return version === null ? label : `${label} ${version.full}`;
 }

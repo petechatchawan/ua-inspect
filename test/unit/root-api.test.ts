@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import * as check from '../../src/check';
 import * as root from '../../src/index';
-import { describe as describeInfo, labels } from '../../src/labels';
+import { describe as describeInfo, label, labels } from '../../src/labels';
 
 // @ts-expect-error ids are types, not value objects
 const removedIdObject = root.BrowserId;
@@ -31,12 +31,14 @@ describe('ua-inspect package root', () => {
                 'isMobile',
                 'isTablet',
                 'isWebView',
+                'label',
                 'labels',
                 'parse',
             ].sort(),
         );
         expect(root.atLeast).toBe(check.atLeast);
         expect(root.describe).toBe(describeInfo);
+        expect(root.label).toBe(label);
         expect(root.isIPadOS).toBe(check.isIPadOS);
         expect(root.isInApp).toBe(check.isInApp);
         expect(root.isWebView).toBe(check.isWebView);

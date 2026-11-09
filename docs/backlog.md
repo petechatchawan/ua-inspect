@@ -28,13 +28,15 @@ Size: **S** is under half a day, **M** is half a day to two days, **L** is more 
 
 ## Release plan
 
-| Release | Scope                                                      | Exit criteria                                                                                                                                         |
-| ------- | ---------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `1.1.2` | P0 correctness, packaging, and docs                        | `npm run check` passes with a writable npm cache, new regressions cover every P0, and the packed tarball compiles from a CommonJS TypeScript consumer |
-| `1.2.0` | P1 DX, docs revamp, AI context, playground, semver policy  | all new public exports have JSDoc, the README quickstart compiles, and the AI cheat sheet is linked from the README                                   |
-| `1.3.0` | REV-01 and selected P2 fixes                               | no behavior change unless listed, tests stay above the current coverage thresholds                                                                    |
-| `1.4.0` | Remaining P2: REF-01, NIT-06, and two documented decisions | all P2 items are resolved or explicitly kept                                                                                                          |
-| `2.0.0` | only if a breaking interface change is accepted            | a migration guide and a major version                                                                                                                 |
+| Release | Scope                                                              | Exit criteria                                                                                                                                         |
+| ------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `1.1.2` | P0 correctness, packaging, and docs                                | `npm run check` passes with a writable npm cache, new regressions cover every P0, and the packed tarball compiles from a CommonJS TypeScript consumer |
+| `1.2.0` | P1 DX, docs revamp, AI context, playground, semver policy          | all new public exports have JSDoc, the README quickstart compiles, and the AI cheat sheet is linked from the README                                   |
+| `1.3.0` | REV-01 and selected P2 fixes                                       | no behavior change unless listed, tests stay above the current coverage thresholds                                                                    |
+| `1.4.0` | Remaining P2: REF-01, NIT-06, and two documented decisions         | all P2 items are resolved or explicitly kept                                                                                                          |
+| `1.5.0` | DX: `label`, Thai quickstart, Hono and Fastify recipes, Node 24 CI | new helper is documented, examples compile, and CI covers Node 18 to 24                                                                               |
+| `1.6.0` | Catalog Tier 2 from `docs/coverage.md`                             | every new row has a real captured string and a fixture test                                                                                           |
+| `2.0.0` | only if a breaking interface change is accepted                    | a migration guide and a major version                                                                                                                 |
 
 No item in this backlog requires `2.0.0`.
 
@@ -624,7 +626,7 @@ These are not required for correctness. Ship them when the area is already being
 
 ### NIT-06 Optional convenience helpers
 
-**Status.** Implemented in `1.4.0`: `describe`, `isInApp`, and `isWebView`.
+**Status.** Implemented: `describe`, `isInApp`, and `isWebView` in `1.4.0`, and `label` in `1.5.0`.
 
 - Type: `revamp`
 - Size: S
