@@ -91,5 +91,9 @@ const rows = {
 export type ClientId = keyof typeof rows;
 export const CLIENTS: Readonly<Record<ClientId, ClientRow>> = rows;
 
-/** A product whose name ends with one of these is an unclassified bot. */
+/**
+ * A product whose name ends with one of these is an unclassified bot. The suffix is deliberate:
+ * most bot names are not separated (`FancyBot`), so a rare product such as `Robot/1.0` is also
+ * classified as a bot.
+ */
 export const GENERIC_BOT_SUFFIXES: readonly string[] = ['bot', 'spider', 'crawler'];

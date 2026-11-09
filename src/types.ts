@@ -10,20 +10,29 @@ export type { AppId, BrowserId, ClientId, ContextId, CPUArchitecture, DeviceType
 
 /**
  * A product or platform version, not SemVer. `full` is the dotted digits as reported and `major`,
- * `minor` and `patch` are its leading integers. A value that has no leading integer is not a version
+ * `minor` and `patch` are its leading integers. `patch` is the third numeric segment, not a
+ * SemVer patch number. A value that has no leading integer is not a version
  * and is reported as `null` instead.
+ *
+ * @example
+ * const version = parse(userAgent).browser.version;
+ * version?.full; // '130.0.6723.92'
+ * `${version}`; // '130.0.6723.92'
  */
 export interface Version {
     readonly full: string;
     readonly major: number;
     readonly minor: number | null;
     readonly patch: number | null;
+    /** The dotted version as reported. Template strings and `String()` use it. */
+    toString(): string;
 }
 
 export type BrowserFamily = 'chromium' | 'firefox' | 'safari';
 export type BrowserMode = 'browser' | 'webview' | 'headless';
 export type EngineId = 'blink' | 'edgehtml' | 'gecko' | 'presto' | 'webkit';
 
+/** The product and its lineage are independent evidence. Either field can be `null`. */
 export interface BrowserInfo {
     readonly name: BrowserId | null;
     readonly version: Version | null;
@@ -31,16 +40,19 @@ export interface BrowserInfo {
     readonly mode: BrowserMode | null;
 }
 
+/** The rendering engine, when the evidence names one. */
 export interface EngineInfo {
     readonly name: EngineId | null;
     readonly version: Version | null;
 }
 
+/** The operating system, when the evidence names one. */
 export interface OSInfo {
     readonly name: OSId | null;
     readonly version: Version | null;
 }
 
+/** The hardware class, vendor and model. A field is `null` when the evidence does not name it. */
 export interface DeviceInfo {
     readonly type: DeviceType | null;
     readonly vendor: VendorId | null;
@@ -48,6 +60,7 @@ export interface DeviceInfo {
     readonly model: string | null;
 }
 
+/** The CPU architecture and bitness, when the evidence names them. */
 export interface CPUInfo {
     readonly architecture: CPUArchitecture | null;
     readonly bitness: 32 | 64 | null;
@@ -85,6 +98,7 @@ export interface ContextInfo {
     readonly version: Version | null;
 }
 
+/** The fixed result shape returned by every entry point. Unknown values are `null`. */
 export interface UAInfo {
     readonly ua: string;
     readonly browser: BrowserInfo;

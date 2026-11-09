@@ -1,0 +1,94 @@
+# ua-inspect
+
+> Zero-dependency TypeScript User-Agent parser for Node.js, browsers, and edge runtimes. It reports browser, engine, operating system, device, CPU, non-browser client, and in-app context as stable lowercase ids, with `null` for unknown values.
+
+Install with `npm install ua-inspect`.
+
+## Imports
+
+```ts
+import { atLeast, describe, is, isBot, isIPad, isIPadOS, isInApp, isWebView, labels, parse } from 'ua-inspect';
+import { parseRequest } from 'ua-inspect/server';
+import { detect } from 'ua-inspect/browser';
+```
+
+`ua-inspect/check` exports the query helpers alone. `ua-inspect/labels` exports display names alone. Use the subpaths when you need the smallest bundle.
+
+## Result contract
+
+```ts
+interface Version {
+    full: string;
+    major: number;
+    minor: number | null;
+    patch: number | null;
+    toString(): string;
+}
+
+interface UAInfo {
+    ua: string;
+    browser: { name: string | null; version: Version | null; family: string | null; mode: string | null };
+    engine: { name: string | null; version: Version | null };
+    os: { name: string | null; version: Version | null };
+    device: { type: string | null; vendor: string | null; model: string | null };
+    cpu: { architecture: string | null; bitness: 32 | 64 | null };
+    client: { type: string | null; name: string | null; token: string | null; version: Version | null };
+    context: { type: string | null; name: string | null; app: string | null; version: Version | null };
+}
+```
+
+- Every unknown value is `null`. There is no `"unknown"` sentinel.
+- `Version` is `{ full, major, minor, patch, toString() }`. Use `atLeast(version, '130')` for a floor, or read `major`.
+- `isIPad` covers the iPadOS id or the `iPad` model. `isIPadOS` narrows `os.name` to `'ipados'`.
+- Ids are lowercase strings. `labels` maps an id to display text.
+- `parse()` never throws. `detect()` throws outside a browser window or worker.
+- `browser.name` and `browser.family` are independent. A Chromium fork with no catalog row is `{ name: null, family: 'chromium' }`.
+
+## Recipes
+
+```ts
+// Block crawlers but keep a person's assistant.
+const info = parseRequest(request);
+if (is(info, { clientType: ['bot', 'crawler', 'ai-crawler'] })) {
+    return new Response(null, { status: 403 });
+}
+
+// Phone or tablet.
+if (is(info, { device: ['mobile', 'tablet'] })) { /* ... */ }
+
+// Any Chromium brand: Chrome, Edge, Brave, Samsung Internet, forks.
+if (is(info, { family: 'chromium' })) { /* ... */ }
+
+// The iPad that the evidence actually names.
+if (isIPad(info)) { /* ... */ }
+
+// A null-safe version floor.
+if (atLeast(info.browser.version, '130')) { /* ... */ }
+
+// In-app context.
+if (is(info, { context: 'line' })) { /* LINE in-app browser */ }
+if (is(info, { app: 'line' })) { /* LINE in-app browser or LIFF */ }
+
+// One-line summary for logs or UI.
+describe(info); // 'Google Chrome 150.0.0.0 on Windows 10 (Desktop)'
+
+// Host context.
+if (isInApp(info)) { /* in-app browser or mini-app */ }
+if (isWebView(info)) { /* browser.mode is webview */ }
+```
+
+## Pitfalls
+
+1. `is(info, { browser: 'chrome' })` is false on a phone. Use `chrome-mobile` or `family: 'chromium'`.
+2. `is(info, { os: 'ios' })` is false on an iPad. Use `['ios', 'ipados']` or `isIPad(info)`.
+3. `info.browser.version > 120` is false. `Version` is an object. Use `atLeast()`.
+4. `labels.browser[info.browser.name]` is `undefined` when no browser is known. Guard the id.
+5. `parse(request)` returns all-null fields. Use `parseRequest(request)`.
+6. `detect()` throws during SSR. Use `parse()` or `parseRequest()`.
+7. `is(info, {})` is always true, and a misspelled key is ignored. Name real keys. Development builds warn.
+
+## Links
+
+- [README](https://github.com/petechatchawan/ua-inspect/blob/master/README.md): full API, dimensions, and examples.
+- [CONTRIBUTING](https://github.com/petechatchawan/ua-inspect/blob/master/CONTRIBUTING.md): change checklist and semver policy.
+- [docs/backlog.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/backlog.md): known and planned work.

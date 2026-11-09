@@ -107,6 +107,20 @@ describe('detect', () => {
         });
     });
 
+    it('keeps the User-Agent detail when low-entropy brands only name the major', async () => {
+        installNavigator(chromeUA, undefined, [{ brand: 'Google Chrome', version: '150' }]);
+        installStandalone(false);
+
+        const result = await detect();
+        expect(result.browser.name).toBe('chrome');
+        expect(result.browser.version).toEqual({
+            full: '150.0.0.0',
+            major: 150,
+            minor: 0,
+            patch: 0,
+        });
+    });
+
     it('falls back to low-entropy brands when high-entropy contains only GREASE', async () => {
         const getHighEntropyValues = vi.fn().mockResolvedValue({
             fullVersionList: [{ brand: 'Not A;Brand', version: '99' }],
@@ -121,7 +135,7 @@ describe('detect', () => {
         expect(result.browser.name).toBe('brave');
     });
 
-    it('ignores malformed high-entropy browser versions', async () => {
+    it('ignores malformed high-entropy browser versions and keeps the User-Agent detail', async () => {
         const getHighEntropyValues = vi.fn().mockResolvedValue({
             fullVersionList: [{ brand: 'Google Chrome', version: 'garbage' }],
         });
@@ -131,10 +145,10 @@ describe('detect', () => {
         const result = await detect({ highEntropy: true });
         expect(result.browser.name).toBe('chrome');
         expect(result.browser.version).toEqual({
-            full: '150',
+            full: '150.0.0.0',
             major: 150,
-            minor: null,
-            patch: null,
+            minor: 0,
+            patch: 0,
         });
     });
 
@@ -237,7 +251,10 @@ describe('detect', () => {
         installStandalone(false);
 
         const result = await detect();
-        expect(result.os).toEqual({ name: 'ipados', version: null });
+        expect(result.os).toEqual({
+            name: 'ipados',
+            version: { full: '18.7', major: 18, minor: 7, patch: null },
+        });
         expect(result.device).toEqual({ type: 'tablet', vendor: 'apple', model: 'iPad' });
         expect(result.browser.name).toBe('safari-mobile');
     });

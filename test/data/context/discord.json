@@ -2,11 +2,16 @@
     {
         "id": "discord-linux-0-0-26",
         "ua": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) discord/0.0.26 Chrome/108.0.5359.215 Electron/22.3.2 Safari/537.36",
-        "note": "The `discord/` token names the app, not a browser, so the app is reported as context.",
+        "note": "Discord desktop runs on Electron. The Electron token is ignored for this context, so the Chromium host is reported.",
         "expect": {
             "browser": {
-                "name": null,
-                "version": null,
+                "name": "chrome",
+                "version": {
+                    "full": "108.0.5359.215",
+                    "major": 108,
+                    "minor": 0,
+                    "patch": 5359
+                },
                 "family": "chromium",
                 "mode": "webview"
             },

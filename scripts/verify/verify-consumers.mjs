@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { copyFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { copyFile, mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -24,6 +24,15 @@ try {
         await copyFile(path.join(fixturesDirectory, file), path.join(workspace, file));
     }
 
+    // The workspace above is an ES module package. A nested package without "type": "module"
+    // makes its TypeScript file a CommonJS consumer, so both declaration paths are compiled.
+    const cjsDirectory = path.join(workspace, 'cjs');
+    await mkdir(cjsDirectory);
+    await writeFile(path.join(cjsDirectory, 'package.json'), '{\n  "private": true\n}\n');
+    for (const file of ['typescript-cjs.ts', 'tsconfig.cjs.json']) {
+        await copyFile(path.join(fixturesDirectory, file), path.join(cjsDirectory, file));
+    }
+
     execFileSync(
         npmCommand,
         [
@@ -45,16 +54,14 @@ try {
         cwd: workspace,
         stdio: 'inherit',
     });
-    execFileSync(
-        nodeCommand,
-        [typescriptCommand, '--project', path.join(workspace, 'tsconfig.json')],
-        {
+    for (const project of ['tsconfig.json', path.join('cjs', 'tsconfig.cjs.json')]) {
+        execFileSync(nodeCommand, [typescriptCommand, '--project', path.join(workspace, project)], {
             cwd: workspace,
             stdio: 'inherit',
-        },
-    );
+        });
+    }
     console.log(
-        'Package consumer verification passed from the supplied tarball for ESM, CommonJS, and TypeScript APIs.',
+        'Package consumer verification passed from the supplied tarball for ESM, CommonJS, and TypeScript APIs, including a CommonJS TypeScript consumer.',
     );
 } finally {
     await rm(workspace, { recursive: true, force: true });

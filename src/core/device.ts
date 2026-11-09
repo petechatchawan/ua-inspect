@@ -146,15 +146,11 @@ export function resolveDevice(
         split?.vendor ?? vendorMatch?.vendor ?? (seed?.vendor as VendorId | undefined) ?? null;
     let model: string | null = split?.model ?? seed?.model ?? null;
 
-    const hinted = hints?.model?.trim();
-    if (hinted) {
+    const hinted = hints?.model ? cleanModel(hints.model) : null;
+    if (hinted !== null) {
         const hintSplit = splitBrand(hinted);
         model = hintSplit.model;
-        vendor = hintSplit.vendor ?? labelOf(vendorForModel(hintSplit.model));
+        vendor = hintSplit.vendor ?? vendorForModel(hintSplit.model)?.vendor ?? null;
     }
     return { type: id, vendor, model };
-}
-
-function labelOf(match: ModelMatch | null): VendorId | null {
-    return match === null ? null : match.vendor;
 }

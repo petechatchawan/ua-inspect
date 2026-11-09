@@ -1,10 +1,12 @@
 import {
     type BrowserFamily,
+    type BrowserId,
     type BrowserMode,
     type ContextType,
     type DeviceType,
     type UAInfo,
 } from '../../src/index';
+import { is, type Query } from '../../src/check';
 import { parse } from '../../src/parse';
 
 describe('canonical contracts', () => {
@@ -64,3 +66,24 @@ function assertClosedTypes(info: UAInfo): void {
 }
 
 void assertClosedTypes;
+
+function assertQueryNarrowing(info: UAInfo, widened: Query): void {
+    if (is(info, widened)) {
+        // @ts-expect-error a widened Query must not narrow a field it does not name
+        const name: BrowserId = info.browser.name;
+        void name;
+    }
+
+    if (is(info, { browser: undefined })) {
+        // @ts-expect-error an undefined value must not narrow the field
+        const name: BrowserId = info.browser.name;
+        void name;
+    }
+
+    if (is(info, { browser: 'chrome' })) {
+        const name: 'chrome' = info.browser.name;
+        void name;
+    }
+}
+
+void assertQueryNarrowing;

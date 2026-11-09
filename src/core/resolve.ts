@@ -24,7 +24,7 @@ import type {
     Version,
 } from '../types';
 import { resolveDevice } from './device';
-import { compileMatcher, pick, strongestVersion, type Candidate } from './match';
+import { compileMatcher, mergeVersion, pick, strongestVersion, type Candidate } from './match';
 import { MAX_UA_LENGTH, readVersion, scan, type Scan } from './scan';
 
 const BROWSER_MATCHER = compileMatcher<BrowserId, BrowserSignal>(BROWSERS);
@@ -47,10 +47,21 @@ for (const id of Object.keys(BROWSERS) as BrowserId[]) {
     for (const brand of BROWSERS[id].brands) BRAND_TO_BROWSER.set(brand.toLowerCase(), id);
 }
 
-function hasUnaccountedProduct(scanned: Scan): boolean {
+const CONTEXT_IGNORES = new Map<AppId, ReadonlySet<string>>();
+for (const id of Object.keys(CONTEXTS) as AppId[]) {
+    CONTEXT_IGNORES.set(id, new Set(CONTEXTS[id].ignores ?? []));
+}
+const NO_IGNORES: ReadonlySet<string> = new Set();
+
+function contextIgnores(context: ContextInfo): ReadonlySet<string> {
+    return context.app === null ? NO_IGNORES : (CONTEXT_IGNORES.get(context.app) ?? NO_IGNORES);
+}
+
+function hasUnaccountedProduct(scanned: Scan, ignored: ReadonlySet<string>): boolean {
     return scanned.products.some(
         (product) =>
             product.top &&
+            !ignored.has(product.name) &&
             !NEUTRAL_PRODUCTS.includes(product.name) &&
             !BROWSER_MATCHER.accounts(product.name) &&
             !CONTEXT_MATCHER.accounts(product.name),
@@ -91,6 +102,7 @@ function resolveBrowser(
     scanned: Scan,
     os: OSId | null,
     hints: ClientHints | null,
+    ignored: ReadonlySet<string>,
 ): BrowserResolution {
     const candidates = [...BROWSER_MATCHER.find(scanned, os), ...hintCandidates(hints)];
     const chromiumBrand =
@@ -101,7 +113,9 @@ function resolveBrowser(
     const signal =
         survivors.find((candidate) => candidate.id === picked && candidate.signal)?.signal ?? null;
     const dropped =
-        picked !== null && survivors.every((c) => c.fallback) && hasUnaccountedProduct(scanned);
+        picked !== null &&
+        survivors.every((c) => c.fallback) &&
+        hasUnaccountedProduct(scanned, ignored);
     const id = dropped ? null : picked;
 
     let family: BrowserFamily | null = null;
@@ -116,7 +130,8 @@ function resolveBrowser(
     if (family === null && chromiumBrand) family = 'chromium';
 
     let version = id ? strongestVersion(candidates, id) : null;
-    if (id === 'chromium' && chromiumBrand) version = readVersion(chromiumBrand.version) ?? version;
+    if (id === 'chromium' && chromiumBrand)
+        version = mergeVersion(readVersion(chromiumBrand.version), version);
 
     // Chrome and Chromium used WebKit until version 28, when Blink replaced it. These three rows
     // report the Chrome version, so the boundary applies. Other chromium-family rows use their own
@@ -237,24 +252,30 @@ function unfrozenIOSVersion(os: OSInfo, scanned: Scan): Version | null {
     return real !== null && real.major >= 26 ? real : null;
 }
 
-function resolveOS(scanned: Scan, hints: ClientHints | null): OSInfo {
-    const candidates = OS_MATCHER.find(scanned, null).map((candidate) => ({
+function osCandidates(scanned: Scan): Candidate<OSId>[] {
+    return OS_MATCHER.find(scanned, null).map((candidate) => ({
         ...candidate,
         version: scaleVersion(candidate.id, candidate.version, 'ua'),
     }));
-    const hintOS = hints?.platform
-        ? PLATFORM_TO_OS.get(hints.platform.trim().toLowerCase())
-        : undefined;
-    if (hintOS !== undefined) {
-        const platformVersion = hints?.platformVersion ? readVersion(hints.platformVersion) : null;
-        candidates.push({
-            id: hintOS,
+}
+
+function hintOSCandidates(hints: ClientHints | null): Candidate<OSId>[] {
+    if (!hints?.platform) return [];
+    const id = PLATFORM_TO_OS.get(hints.platform.trim().toLowerCase());
+    if (id === undefined) return [];
+    const platformVersion = hints.platformVersion ? readVersion(hints.platformVersion) : null;
+    return [
+        {
+            id,
             source: 'hints',
-            version: scaleVersion(hintOS, platformVersion, 'hints'),
+            version: scaleVersion(id, platformVersion, 'hints'),
             fallback: false,
             signal: null,
-        });
-    }
+        },
+    ];
+}
+
+function pickOS(scanned: Scan, candidates: readonly Candidate<OSId>[]): OSInfo {
     const { id } = pick(candidates, OS_MATCHER.beats);
     const version = id ? strongestVersion(candidates, id) : null;
     const os: OSInfo = { name: id, version };
@@ -280,7 +301,9 @@ function resolveCPU(scanned: Scan, hints: ClientHints | null): CPUInfo {
                 (hinted.architecture === 'x86' && base.architecture === 'x86_64'));
         return weakerCompatible ? base : hinted;
     }
-    return hints.bitness !== null ? { ...base, bitness: hints.bitness } : base;
+    // A bitness without an architecture cannot identify a CPU, and applying it to the
+    // User-Agent architecture could pair `x86_64` with 32 bits. Ignore it.
+    return base;
 }
 
 const NO_CLIENT: ClientInfo = { type: null, name: null, token: null, version: null };
@@ -318,11 +341,16 @@ export function resolve(
 ): UAInfo {
     const text = ua.length > MAX_UA_LENGTH ? ua.slice(0, MAX_UA_LENGTH) : ua;
     const scanned = scan(text);
-    let os = resolveOS(scanned, hints);
-    const uaOS = hints ? resolveOS(scanned, null) : os;
-    const resolvedBrowser = resolveBrowser(scanned, uaOS.name, hints);
-    let browser = resolvedBrowser.browser;
     const context = resolveContext(scanned, runtime);
+    const ignored = contextIgnores(context);
+    const baseOSCandidates = osCandidates(scanned);
+    const uaOS = pickOS(scanned, baseOSCandidates);
+    let os = uaOS;
+    if (hints) {
+        os = pickOS(scanned, [...baseOSCandidates, ...hintOSCandidates(hints)]);
+    }
+    const resolvedBrowser = resolveBrowser(scanned, uaOS.name, hints, ignored);
+    let browser = resolvedBrowser.browser;
 
     const embedded = context.type === 'in-app-browser' || context.type === 'mini-app';
     const mode = embedded ? (browser.mode === 'headless' ? 'headless' : 'webview') : browser.mode;
@@ -332,7 +360,14 @@ export function resolve(
     // Client Hints, so the runtime touch check is the only evidence left. The OS guard keeps a real
     // Mac (no touch points) and any non-Mac string out of this branch.
     if (runtime?.touchMac === true && uaOS.name === 'macos') {
-        os = { name: 'ipados', version: null };
+        // Safari on iOS reports its release through `Version/`, which tracks the iPadOS release.
+        os = {
+            name: 'ipados',
+            version: readVersion(
+                scanned.products.find((product) => product.name === 'version' && product.top)
+                    ?.version ?? null,
+            ),
+        };
         device = { type: 'tablet', vendor: 'apple', model: 'iPad' };
         if (browser.name === 'safari') browser = { ...browser, name: 'safari-mobile' };
     }

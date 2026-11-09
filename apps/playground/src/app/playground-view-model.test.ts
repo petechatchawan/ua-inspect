@@ -36,14 +36,19 @@ describe('playground view models', () => {
     });
 
     it('creates examples for each public entry point', () => {
-        expect(
-            createCodeExample({ mode: 'current', userAgent: '', hasClientHints: false }),
-        ).toContain('ua-inspect/browser');
-        expect(
-            createCodeExample({ mode: 'manual', userAgent: 'ua', hasClientHints: false }),
-        ).toContain("from 'ua-inspect'");
-        expect(
-            createCodeExample({ mode: 'manual', userAgent: 'ua', hasClientHints: true }),
-        ).toContain('ua-inspect/server');
+        expect(createCodeExample({ mode: 'current', userAgent: '', headers: null })).toContain(
+            'ua-inspect/browser',
+        );
+        expect(createCodeExample({ mode: 'manual', userAgent: 'ua', headers: null })).toContain(
+            "from 'ua-inspect'",
+        );
+        const withHeaders = createCodeExample({
+            mode: 'manual',
+            userAgent: 'ua',
+            headers: { 'sec-ch-ua': '"Google Chrome";v="130"' },
+        });
+        expect(withHeaders).toContain('ua-inspect/server');
+        expect(withHeaders).toContain('"sec-ch-ua"');
+        expect(withHeaders).not.toContain('clientHints');
     });
 });

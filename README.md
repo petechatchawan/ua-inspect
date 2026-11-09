@@ -8,8 +8,7 @@
 **ua-inspect** is a zero-dependency TypeScript User-Agent parser with browser, operating-system, device, bot/client, WebView, in-app context, and User-Agent Client Hints support.
 
 ```ts
-import { parse } from 'ua-inspect';
-import { is, isBot } from 'ua-inspect/check';
+import { parse, is, isBot } from 'ua-inspect';
 
 const info = parse(userAgent);
 
@@ -19,6 +18,27 @@ if (is(info, { browser: 'chrome-mobile', os: 'android', device: 'mobile' })) {
 if (isBot(info)) return new Response(null, { status: 403 });
 ```
 
+## Contents
+
+- [Installation](#installation)
+- [Quickstart](#quickstart)
+- [Entry points](#entry-points)
+- [Result model](#result-model)
+- [Queries](#queries)
+- [Query cookbook](#query-cookbook)
+- [Common mistakes](#common-mistakes)
+- [LINE and LIFF](#line-and-liif)
+- [Client Hints merge behavior](#client-hints-merge-behavior)
+- [What a User-Agent cannot tell you](#what-a-user-agent-cannot-tell-you)
+- [Troubleshooting](#troubleshooting)
+- [CommonJS](#commonjs)
+- [Real-world usage](#real-world-usage)
+- [Framework recipes](#framework-recipes)
+- [Adding a browser, bot, vendor or app](#adding-a-browser-bot-vendor-or-app)
+- [For AI assistants](#for-ai-assistants)
+- [Trust boundary](#trust-boundary)
+- [License](#license)
+
 ## Installation
 
 ```bash
@@ -27,15 +47,44 @@ npm install ua-inspect
 
 Node.js 18 or newer is required for server-side usage. TypeScript declarations, ESM, and CommonJS exports are included.
 
+## Quickstart
+
+```ts
+import { atLeast, is, isBot, labels, parse } from 'ua-inspect';
+
+const info = parse(userAgent);
+
+// Any Chromium browser on a handheld device.
+if (is(info, { family: 'chromium', device: ['mobile', 'tablet'] })) {
+  // ...
+}
+
+// Crawlers, AI crawlers, and unclassified bots.
+if (isBot(info)) {
+  // ...
+}
+
+// A version floor. `atLeast` is null-safe.
+if (info.browser.name && atLeast(info.browser.version, '130')) {
+  labels.browser[info.browser.name]; // 'Google Chrome'
+}
+```
+
+- Use `parse()` for a string, `parseRequest()` for a request with Client Hints, and `detect()` in a browser.
+- Every field is `null` when the evidence does not name it.
+- The root entry exports `parse`, `is`, `atLeast`, the device predicates, and `labels`.
+
 ## Entry points
 
-| Use case                          | Import               | Main API                                                                 |
-| --------------------------------- | -------------------- | ------------------------------------------------------------------------ |
-| Pure User-Agent parsing           | `ua-inspect`         | `parse()`                                                                |
-| Queries                           | `ua-inspect/check`   | `is()`, `isBot()`, `isMobile()`, `isTablet()`, `isDesktop()`, `isIPad()` |
-| HTTP request + Client Hints       | `ua-inspect/server`  | `parseRequest()`                                                         |
-| Current browser + runtime signals | `ua-inspect/browser` | `detect()`                                                               |
-| Display names                     | `ua-inspect/labels`  | `labels`                                                                 |
+| Use case                          | Import               | Main API                                                                      |
+| --------------------------------- | -------------------- | ----------------------------------------------------------------------------- |
+| Pure parsing and queries          | `ua-inspect`         | `parse()`, `is()`, `atLeast()`, `isBot()`, `describe()`, predicates, `labels` |
+| Queries only (smallest bundle)    | `ua-inspect/check`   | `is()`, `isBot()`, `isMobile()`, `isTablet()`, `isDesktop()`, `isIPad()`      |
+| HTTP request + Client Hints       | `ua-inspect/server`  | `parseRequest()`                                                              |
+| Current browser + runtime signals | `ua-inspect/browser` | `detect()`                                                                    |
+| Display names only                | `ua-inspect/labels`  | `labels`                                                                      |
+
+The root entry re-exports the query helpers and `labels`. Use the subpaths when you need only one part and want the smallest bundle.
 
 ### Pure parser
 
@@ -71,7 +120,7 @@ const info = parseRequest({
 });
 ```
 
-It consumes the supported `Sec-CH-UA-*` headers that are already present. It does **not** emit or manage `Accept-CH`, `Critical-CH`, `Permissions-Policy`, caching headers, or framework response behavior. Each header is read up to 1,024 characters.
+It consumes the supported `Sec-CH-UA-*` headers that are already present. It does **not** emit or manage `Accept-CH`, `Critical-CH`, `Permissions-Policy`, caching headers, or framework response behavior. Client Hints headers are read up to 1,024 characters. The User-Agent is echoed in full in `info.ua`, while detection reads its first 1,024 characters.
 
 ### Current browser
 
@@ -130,10 +179,11 @@ type Version = {
   major: number;
   minor: number | null;
   patch: number | null;
+  toString(): string; // returns `full`
 };
 ```
 
-A string with no leading integer is not a version, so the field is `null`.
+A string with no leading integer is not a version, so the field is `null`. `patch` is the third numeric segment, not a SemVer patch number. Template strings and `String(version)` return the dotted version.
 
 ### Stable identities
 
@@ -152,8 +202,18 @@ Use ids for program logic. For a person, use `labels`:
 ```ts
 import { labels } from 'ua-inspect/labels';
 
-labels.browser[info.browser.name];  // 'Google Chrome'
-labels.vendor.samsung;              // 'Samsung'
+const browserLabel = info.browser.name
+    ? labels.browser[info.browser.name] // 'Google Chrome'
+    : 'Unknown';
+labels.vendor.samsung; // 'Samsung'
+```
+
+For logs or a one-line UI label, use `describe()`:
+
+```ts
+import { describe } from 'ua-inspect';
+
+describe(info); // 'Google Chrome 150.0.0.0 on Windows 10 (Desktop)'
 ```
 
 `browser.name` and `browser.family` are independent evidence fields. Both of these states are valid:
@@ -216,6 +276,20 @@ Android WebView is `browser.mode === 'webview'`, not a separate browser.
 
 Chrome on a phone is `chrome-mobile`, and Safari on iOS or iPadOS is `safari-mobile`. Desktop and tablet builds stay `chrome` and `safari`. A phone build carries the `Mobile` token; both rows are fallbacks, so a specific product such as Samsung Internet or a specific fork still wins. Firefox on Android, iOS or iPadOS is `firefox-mobile`.
 
+#### Migrating from 1.0 ids
+
+1.1.0 split phone builds into their own ids. These strings now report a different `browser.name`:
+
+| 1.0 result                                     | 1.1 result       |
+| ---------------------------------------------- | ---------------- |
+| `chrome` on Android, HarmonyOS, iOS, or iPadOS | `chrome-mobile`  |
+| `safari` on iOS or iPadOS                      | `safari-mobile`  |
+| `firefox` on Android, iOS, or iPadOS           | `firefox-mobile` |
+
+`is(info, { browser: 'chrome' })` no longer matches a phone. Use `chrome-mobile`, both ids, or `family: 'chromium'`. Removing or renaming an id is a major release. See [CONTRIBUTING.md](https://github.com/petechatchawan/ua-inspect/blob/master/CONTRIBUTING.md) for the policy.
+
+Known host-app metadata is ignored for the app that owns it. A TikTok Android WebView reports `chrome-mobile` with the Chrome build, and Discord desktop reports the Chromium host as `chrome`. The same products in a string with no known context still suppress a fallback browser identity.
+
 The stock Android browser is `android-browser`. It is the only client that sends a `Version/` token on Android with no Chrome token. Android 4.4 rebuilt it on Chromium, so those builds carry `Chrome/` and stay `chrome-mobile`, which a modern in-app WebView also reports.
 
 ### Supported dimensions
@@ -264,20 +338,35 @@ is(info, { vendor: 'Samsung' });   // error: vendor ids are lowercase
 An unknown field never matches. `device: 'tablet'` is exact, so a tablet is not `mobile`.
 
 The device helpers read `device.type` directly and narrow it. `isMobile`, `isTablet` and
-`isDesktop` match one type each, and `isIPad` is true when `os` is `ipados` or the device
-model is `iPad`:
+`isDesktop` match one type each. `isIPadOS` narrows `os.name` to `ipados`, and `isIPad` is
+true when the OS is iPadOS or the device model is `iPad`:
 
 ```ts
-import { isIPad, isMobile } from 'ua-inspect/check';
+import { isIPad, isIPadOS, isMobile } from 'ua-inspect/check';
 
 if (isMobile(info)) {
   info.device.type; // narrowed to 'mobile'
+}
+if (isIPadOS(info)) {
+  info.os.name; // narrowed to 'ipados'
 }
 if (isIPad(info)) { /* an iPad the evidence actually names */ }
 ```
 
 `isIPad` only reports what the evidence names. An iPad in desktop mode sends a Macintosh
 User-Agent, so `parse()` cannot see it; only `detect()` recovers it through touch evidence.
+
+`isInApp(info)` is true for an in-app browser or a mini-app. `isWebView(info)` narrows
+`browser.mode` to `webview`:
+
+```ts
+if (isWebView(info)) {
+  info.browser.mode; // 'webview'
+}
+if (isInApp(info)) {
+  info.context.type; // 'in-app-browser' | 'mini-app'
+}
+```
 
 `isBot(info)` is true for the client types `bot`, `crawler` and `ai-crawler`. The types are:
 
@@ -307,7 +396,8 @@ Find the goal on the left, copy the query on the right:
 | Handheld layout                  | `is(info, { device: ['mobile', 'tablet'] })`                 |
 | Any Chromium brand               | `is(info, { family: 'chromium' })`                           |
 | Any Firefox, desktop or phone    | `is(info, { family: 'firefox' })`                            |
-| Inside any app WebView           | `is(info, { mode: 'webview' })`                              |
+| Inside any WebView               | `isWebView(info)`                                            |
+| Inside any host app              | `isInApp(info)`                                              |
 | Inside a specific app            | `is(info, { context: 'line' })`                              |
 | LINE or LIFF                     | `is(info, { app: 'line' })`                                  |
 | Proven LIFF (needs `detect`)     | `is(info, { context: 'liff' })`                              |
@@ -315,10 +405,15 @@ Find the goal on the left, copy the query on the right:
 | Apple desktop only               | `is(info, { os: 'macos', device: 'desktop' })`               |
 | Block indexers, allow assistants | `is(info, { clientType: ['bot', 'crawler', 'ai-crawler'] })` |
 | Headless automation              | `is(info, { mode: 'headless' })`                             |
+| Minimum version                  | `atLeast(info.browser.version, '130')`                       |
+| One-line summary                 | `describe(info)`                                             |
 
 ```ts
-// Gate a feature on a minimum browser version.
-if (is(info, { browser: 'chrome' }) && (info.browser.version?.major ?? 0) >= 120) { /* ... */ }
+// Gate a feature on a minimum browser version. `atLeast` is null-safe.
+if (atLeast(info.browser.version, '120')) { /* ... */ }
+
+// Or require a specific product and a floor.
+if (is(info, { browser: 'chrome' }) && atLeast(info.browser.version, '120')) { /* ... */ }
 
 // One layout for phones and tablets, another for everything else.
 if (is(info, { device: ['mobile', 'tablet'] })) { /* handheld layout */ }
@@ -364,9 +459,32 @@ if (is(info, { browser: ['chrome', 'edge'], os: 'windows' })) {
 }
 ```
 
-Two things `is()` cannot do by itself: compare full versions (read `info.*.version`, or
-add a small compare helper in your app) and prove LIFF (pair it with `detect({ liff })`,
-as below).
+`is()` does not compare versions. Use `atLeast()` for a minimum, and read `major`, `minor` and `patch` for a custom comparison. LIFF needs `detect({ liff })`, as below.
+
+```ts
+import { atLeast } from 'ua-inspect';
+
+if (atLeast(info.browser.version, '130')) {
+  // Chrome 130 or newer
+}
+```
+
+## Common mistakes
+
+| Mistake                                      | What happens                                | Do this                                                 |
+| -------------------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
+| `is(info, { browser: 'chrome' })` on a phone | `false` since 1.1.0                         | `chrome-mobile`, both ids, or `family: 'chromium'`      |
+| `is(info, { os: 'ios' })` on an iPad         | `false`, because iPadOS is its own id       | `['ios', 'ipados']` or `isIPad(info)`                   |
+| `is(info, {})`                               | Always `true`                               | Name at least one key                                   |
+| `is(info, { browser: 'Chrome' })`            | Always `false`                              | Ids are lowercase                                       |
+| `is(info, { brower: 'chrome' })`             | `true`, and a development warning since 1.2 | Fix the key. TypeScript rejects it on an object literal |
+| `info.browser.version > 120`                 | Always `false`                              | `atLeast(info.browser.version, '120')`                  |
+| `` `${info.browser.version}` `` before 1.2   | `[object Object]`                           | `info.browser.version?.full`, or upgrade                |
+| `labels.browser[info.browser.name]`          | `undefined` when no browser is known        | Guard the id, as the examples do                        |
+| `parse(request)`                             | Every field is `null`                       | `parseRequest(request)`                                 |
+| `detect()` during SSR                        | Throws                                      | `parse()` or `parseRequest()`                           |
+
+In development, `is()` warns once per unknown query key and once for an empty query. The return value does not change, and production builds are silent.
 
 ## LINE and LIFF
 
@@ -405,6 +523,8 @@ Adapters normalize browser `userAgentData` or HTTP headers into one internal sha
 - An Android hint never replaces HarmonyOS.
 - A mobile hint never turns an iPad into mobile, but it replaces a generic guess.
 - A hint model brings its own vendor, and the User-Agent vendor is never kept for a different model.
+- A low-entropy `Sec-CH-UA` hint keeps the version detail the User-Agent already reports. A hint wins when it names a different major or carries more segments.
+- A bitness hint without an architecture hint is ignored, because it cannot identify a CPU on its own.
 - Windows versions use one marketing scale. A `platformVersion` of 13 or more is Windows 11.
 
 Applications remain responsible for Client Hints negotiation and cache behavior.
@@ -418,12 +538,57 @@ These are limits of the string, not parser defects:
 - An iPad in desktop mode sends a Macintosh User-Agent, so `parse()` and `parseRequest()` report a Mac. Only `detect()` recovers it: a Mac-like platform that reports touch points is an iPad.
 - Chrome reports a fixed Android version and no model in its reduced User-Agent.
 - Chrome, Chrome Mobile and Chromium before version 28 report the `webkit` engine; version 28 is the first Blink release. The Blink engine version is `null`. It equals the Chrome version, so use `browser.version`.
+- Any product whose name ends in `bot`, `spider`, or `crawler` is an unclassified bot. Most bot names are not separated (`FancyBot`), so a rare product such as `Robot/1.0` is also classified as a bot.
+- A repeated `user-agent` header joins with `, ` before parsing. A value that names two clients is a conflict, so `client` stays `null`.
+
+## Troubleshooting
+
+### `detect()` throws "requires a browser window or worker"
+
+`detect()` reads `navigator` and runtime signals, so it only runs in a browser window or worker. Node.js 21 and later also define `navigator`, but there is no `document`, so it still throws. Use `parse()` for a string or `parseRequest()` for a request on the server.
+
+### `labels.browser[name]` is undefined
+
+`browser.name` is `null` when no browser is known. Guard it:
+
+```ts
+const browser = info.browser.name ? labels.browser[info.browser.name] : 'Unknown';
+```
+
+### A version comparison is always false
+
+`Version` is an object, not a string or a number. Use `atLeast(info.browser.version, '130')`, or read `version.major`, `version.minor`, and `version.patch`.
+
+### A phone reports `chrome-mobile`, not `chrome`
+
+That is the 1.1.0 id split. Use `chrome-mobile`, both ids, or `family: 'chromium'`.
+
+### An iPad reports macOS
+
+An iPad in desktop mode sends a Macintosh User-Agent. `parse()` and `parseRequest()` follow the string. Call `detect()` in the browser: a Mac-like platform with more than one touch point is an iPad.
+
+### Client Hints are missing on the server
+
+`parseRequest()` only reads the `Sec-CH-UA-*` headers that your platform forwards. It does not send `Accept-CH`. If you need them, add the response header yourself:
+
+```ts
+response.headers.set('Accept-CH', 'Sec-CH-UA, Sec-CH-UA-Mobile, Sec-CH-UA-Platform');
+```
+
+Then forward the request headers to `parseRequest()`.
+
+### `parseRequest()` returns an empty result
+
+Check that the header source is a `Request`, a `Headers` object, or a plain record with lowercased or mixed-case keys. A `user-agent` header is optional; an absent one yields empty fields, not an error.
+
+### `is()` matches everything or nothing
+
+An empty query is always true, and a misspelled key is ignored. From 1.2, development builds warn once for both. In production, add a test with a known `UAInfo` and a literal query.
 
 ## CommonJS
 
 ```js
-const { parse } = require('ua-inspect');
-const { is } = require('ua-inspect/check');
+const { parse, is } = require('ua-inspect');
 
 const info = parse(userAgent);
 if (is(info, { browser: 'chrome-mobile', device: 'mobile' })) {
@@ -507,6 +672,78 @@ info.device; // { type: 'mobile', vendor: 'samsung', model: 'SM-S928B' }
 
 High-entropy hints are an opt-in round trip to the browser, so request them only when you need the extra fields.
 
+## Framework recipes
+
+The Web API and Node header recipes are compiled in [docs/examples/server.ts](https://github.com/petechatchawan/ua-inspect/blob/master/docs/examples/server.ts). The framework snippets below use the same calls with each framework's own request type.
+
+### Next.js middleware
+
+```ts
+import { NextResponse, type NextRequest } from 'next/server';
+import { isBot } from 'ua-inspect';
+import { parseRequest } from 'ua-inspect/server';
+
+export function middleware(request: NextRequest) {
+  const info = parseRequest(request);
+  if (isBot(info)) return new NextResponse(null, { status: 403 });
+  return NextResponse.next();
+}
+
+export const config = { matcher: '/((?!_next/static|favicon.ico).*)' };
+```
+
+### Hono
+
+```ts
+import { Hono } from 'hono';
+import { isBot } from 'ua-inspect';
+import { parseRequest } from 'ua-inspect/server';
+
+const app = new Hono();
+
+app.use('*', async (context, next) => {
+  const info = parseRequest(context.req.raw);
+  if (isBot(info)) return context.text('Forbidden', 403);
+  await next();
+});
+```
+
+### Fastify
+
+```ts
+import Fastify from 'fastify';
+import { isBot } from 'ua-inspect';
+import { parseRequest } from 'ua-inspect/server';
+
+const app = Fastify();
+
+app.addHook('onRequest', async (request, reply) => {
+  const info = parseRequest(request.headers);
+  if (isBot(info)) await reply.code(403).send();
+});
+```
+
+### Cloudflare Workers
+
+```ts
+import { is } from 'ua-inspect';
+import { parseRequest } from 'ua-inspect/server';
+
+export default {
+  async fetch(request: Request) {
+    const info = parseRequest(request);
+    if (is(info, { device: 'mobile' })) {
+      // ...
+    }
+    return Response.json(info);
+  },
+};
+```
+
+### Express
+
+See [Block bots in an Express middleware](#block-bots-in-an-express-middleware).
+
 ## Adding a browser, bot, vendor or app
 
 Detection data lives in `src/catalog/`, one file per dimension, and rows are data, not code. A row cannot hold a regular expression, and ESLint rejects one in `src`. The id type, the `is()` query type, the Client Hints maps and `labels` all come from the rows.
@@ -514,6 +751,17 @@ Detection data lives in `src/catalog/`, one file per dimension, and rows are dat
 1. Add the row to the catalog file, for example `whale: { label: 'Naver Whale', family: 'chromium', engine: 'blink', brands: [], match: ['Whale'] }` in `src/catalog/browsers.ts`.
 2. Add a **real** captured string to `test/data/user-agents.json`: `{ "id": "whale-desktop", "ua": "Mozilla/5.0 (...)", "src": "observed:<where>@<date>", "expect": { "browser": { "name": "whale" } } }`. Nothing composed belongs there. A real string for one dimension goes in `test/data/<dimension>/<name>.json` instead (for example `browser/chrome.json`), with no `src`. Each file holds only the strings for that name. Both are read by the same runner, one row per case, and `note` explains any deliberate difference.
 3. Run `npm test`. The row's `beats` references must exist, every id needs a label, every entry in `user-agents.json` must name its capture in `src`, and the new string must parse as its `expect` says.
+
+See [CONTRIBUTING.md](https://github.com/petechatchawan/ua-inspect/blob/master/CONTRIBUTING.md) for the full checklist and the versioning policy.
+
+## For AI assistants
+
+The package is new, so models have little prior training data for its API. Read [llms.txt](https://github.com/petechatchawan/ua-inspect/blob/master/llms.txt) before generating code. It has the canonical imports, six recipes, the pitfalls, and the result contract in one page.
+
+- [llms.txt](https://github.com/petechatchawan/ua-inspect/blob/master/llms.txt): one-page cheat sheet for code generation.
+- [AGENTS.md](https://github.com/petechatchawan/ua-inspect/blob/master/AGENTS.md): repository layout, commands, and catalog rules for an agent working in this repo.
+- [CONTRIBUTING.md](https://github.com/petechatchawan/ua-inspect/blob/master/CONTRIBUTING.md): change checklist and semver policy.
+- [docs/backlog.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/backlog.md): known and planned work.
 
 ## Trust boundary
 

@@ -1,6 +1,6 @@
 {
     "name": "ua-inspect",
-    "version": "1.1.1",
+    "version": "1.4.0",
     "description": "Zero-dependency User-Agent parser for TypeScript with Client Hints, browser, OS, device, bot and WebView detection for Node.js and browsers",
     "author": "Chatchawan Koedsawas",
     "license": "MIT",
@@ -24,33 +24,58 @@
     "types": "./dist/esm/index.d.ts",
     "exports": {
         ".": {
-            "types": "./dist/esm/index.d.ts",
-            "import": "./dist/esm/index.js",
-            "require": "./dist/cjs/index.js",
+            "import": {
+                "types": "./dist/esm/index.d.ts",
+                "default": "./dist/esm/index.js"
+            },
+            "require": {
+                "types": "./dist/cjs/index.d.ts",
+                "default": "./dist/cjs/index.js"
+            },
             "default": "./dist/esm/index.js"
         },
         "./check": {
-            "types": "./dist/esm/check.d.ts",
-            "import": "./dist/esm/check.js",
-            "require": "./dist/cjs/check.js",
+            "import": {
+                "types": "./dist/esm/check.d.ts",
+                "default": "./dist/esm/check.js"
+            },
+            "require": {
+                "types": "./dist/cjs/check.d.ts",
+                "default": "./dist/cjs/check.js"
+            },
             "default": "./dist/esm/check.js"
         },
         "./server": {
-            "types": "./dist/esm/server.d.ts",
-            "import": "./dist/esm/server.js",
-            "require": "./dist/cjs/server.js",
+            "import": {
+                "types": "./dist/esm/server.d.ts",
+                "default": "./dist/esm/server.js"
+            },
+            "require": {
+                "types": "./dist/cjs/server.d.ts",
+                "default": "./dist/cjs/server.js"
+            },
             "default": "./dist/esm/server.js"
         },
         "./browser": {
-            "types": "./dist/esm/browser.d.ts",
-            "import": "./dist/esm/browser.js",
-            "require": "./dist/cjs/browser.js",
+            "import": {
+                "types": "./dist/esm/browser.d.ts",
+                "default": "./dist/esm/browser.js"
+            },
+            "require": {
+                "types": "./dist/cjs/browser.d.ts",
+                "default": "./dist/cjs/browser.js"
+            },
             "default": "./dist/esm/browser.js"
         },
         "./labels": {
-            "types": "./dist/esm/labels.d.ts",
-            "import": "./dist/esm/labels.js",
-            "require": "./dist/cjs/labels.js",
+            "import": {
+                "types": "./dist/esm/labels.d.ts",
+                "default": "./dist/esm/labels.js"
+            },
+            "require": {
+                "types": "./dist/cjs/labels.d.ts",
+                "default": "./dist/cjs/labels.js"
+            },
             "default": "./dist/esm/labels.js"
         },
         "./package.json": "./package.json"
@@ -70,7 +95,7 @@
         "identity:check": "node scripts/verify/verify-package-identity.mjs",
         "typecheck": "tsc --project tsconfig.test.json",
         "check": "npm run format:check && npm run lint && npm run typecheck && npm run detection:check && npm run build && npm run pack:check",
-        "pack:check": "node scripts/verify/verify-package.mjs",
+        "pack:check": "node scripts/verify/verify-public-docs.mjs && node scripts/verify/verify-package.mjs",
         "playground:install": "node scripts/playground/install-playground-package.mjs",
         "playground:boundaries": "node scripts/playground/verify-playground-boundaries.mjs",
         "playground:setup": "npm ci --prefix apps/playground && npm run build && npm run playground:install",
@@ -85,7 +110,8 @@
     "files": [
         "dist",
         "README.md",
-        "LICENSE"
+        "LICENSE",
+        "llms.txt"
     ],
     "keywords": [
         "user-agent",
@@ -115,6 +141,7 @@
         "@typescript-eslint/eslint-plugin": "^8.7.0",
         "@typescript-eslint/parser": "^8.7.0",
         "@vitest/coverage-v8": "~3.2.4",
+        "esbuild": "^0.25.12",
         "eslint": "^8.25.0",
         "prettier": "3.9.10",
         "typescript": "^5.9.3",

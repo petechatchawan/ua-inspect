@@ -91,6 +91,21 @@ function countSpaces(text: string): number {
     return spaces;
 }
 
+const VERSION_METHODS = {
+    toString(this: Version): string {
+        return this.full;
+    },
+};
+
+function createVersion(
+    full: string,
+    major: number,
+    minor: number | null,
+    patch: number | null,
+): Version {
+    return Object.assign(Object.create(VERSION_METHODS) as Version, { full, major, minor, patch });
+}
+
 export function readVersion(raw: string | null): Version | null {
     if (raw === null || raw.length === 0 || !isDigit(raw.charCodeAt(0))) return null;
     const limit = Math.min(raw.length, MAX_VERSION_LENGTH);
@@ -108,12 +123,12 @@ export function readVersion(raw: string | null): Version | null {
         .map((segment) => (segment.length > 0 ? Number(segment) : Number.NaN));
     const [major, minor, patch] = numbers;
     if (!Number.isSafeInteger(major)) return null;
-    return {
+    return createVersion(
         full,
         major,
-        minor: Number.isSafeInteger(minor) ? minor : null,
-        patch: Number.isSafeInteger(patch) ? patch : null,
-    };
+        Number.isSafeInteger(minor) ? minor : null,
+        Number.isSafeInteger(patch) ? patch : null,
+    );
 }
 
 /**

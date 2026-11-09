@@ -1,4 +1,4 @@
-import { labels, type UAInfo } from '../services/ua-detection-service';
+import { labels, type ClientHintHeaders, type UAInfo } from '../services/ua-detection-service';
 import type { PlaygroundMode } from './playground-state';
 
 export const NOT_DETECTED = 'Not detected';
@@ -159,17 +159,17 @@ export function createResultCards(result: UAInfo): readonly ResultCardViewModel[
 export function createCodeExample(input: {
     readonly mode: PlaygroundMode;
     readonly userAgent: string;
-    readonly hasClientHints: boolean;
+    readonly headers: ClientHintHeaders | null;
 }): string {
     if (input.mode === 'current') {
         return `import { detect } from 'ua-inspect/browser';\n\nconst result = await detect();`;
     }
-    if (input.hasClientHints) {
+    if (input.headers !== null) {
         return (
             `import { parseRequest } from 'ua-inspect/server';\n\n` +
             `const result = parseRequest({\n` +
             `  userAgent: ${JSON.stringify(input.userAgent)},\n` +
-            `  headers: clientHints,\n` +
+            `  headers: ${JSON.stringify(input.headers)},\n` +
             `});`
         );
     }

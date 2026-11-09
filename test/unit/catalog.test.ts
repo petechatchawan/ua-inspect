@@ -39,6 +39,15 @@ describe('catalog references', () => {
             expect(reaches(id, id), `${id} beats itself`).toBe(false);
     });
 
+    it('keeps context ignore tokens lowercase and non-empty', () => {
+        for (const row of Object.values(CONTEXTS)) {
+            for (const token of row.ignores ?? []) {
+                expect(token.length).toBeGreaterThan(0);
+                expect(token).toBe(token.toLowerCase());
+            }
+        }
+    });
+
     it('gives each Client Hints brand to exactly one browser', () => {
         const brands = Object.values(BROWSERS).flatMap((row) =>
             row.brands.map((brand) => brand.toLowerCase()),

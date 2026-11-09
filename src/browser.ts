@@ -3,12 +3,16 @@ import { resolve } from './core/resolve';
 import type { BrandVersion, ClientHints, RuntimeEvidence } from './input';
 import type { UAInfo } from './types';
 
+/** A structural adapter for a LINE LIFF client. The package does not depend on `@line/liff`. */
 export interface LiffAdapter {
     isInClient(): boolean;
 }
 
+/** Options for `detect()`. */
 export interface DetectOptions {
+    /** Request the five documented high-entropy hints. Defaults to `false`. */
     readonly highEntropy?: boolean;
+    /** Runtime evidence for LIFF. When absent, no LIFF result is produced. */
     readonly liff?: LiffAdapter;
 }
 
@@ -135,6 +139,18 @@ function readBrowserNavigator(): NavigatorLike | null {
     return isBrowserRuntime && globals.navigator ? globals.navigator : null;
 }
 
+/**
+ * Detects the current browser from `navigator.userAgent`, the low-entropy Client Hints, and
+ * the runtime signals that Safari exposes. It also recovers an iPad in desktop mode from
+ * `platform` and `maxTouchPoints`.
+ *
+ * It throws outside a browser window or worker. Use `parse()` or `parseRequest()` on the server,
+ * including Node.js 21 and later, which define `navigator`.
+ *
+ * @example
+ * const info = await detect();
+ * const detailed = await detect({ highEntropy: true });
+ */
 export async function detect(options: DetectOptions = {}): Promise<UAInfo> {
     const navigatorValue = readBrowserNavigator();
     if (!navigatorValue) {

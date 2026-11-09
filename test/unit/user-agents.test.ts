@@ -56,6 +56,14 @@ describe('stored User-Agent vectors', () => {
         expect(bad.map((entry) => entry.id)).toEqual([]);
     });
 
+    it('keeps the documented fixture counts current', () => {
+        const coverage = readFileSync(path.join(DATA, '..', '..', 'docs', 'coverage.md'), 'utf8');
+        const dimensions = VECTORS.length - CAPTURED.length;
+
+        expect(coverage).toContain(`${CAPTURED.length} entries today`);
+        expect(coverage).toContain(`${dimensions} entries today`);
+    });
+
     it.each(VECTORS.map((entry) => [entry.id, entry] as const))(
         '%s parses as expected',
         (_, entry) => {

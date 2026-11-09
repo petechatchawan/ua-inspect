@@ -2,6 +2,105 @@
 
 All notable changes to `ua-inspect` are documented in this file.
 
+## 1.4.0 — 2026-11-09
+
+Adds one-line result formatting and host-context helpers, and closes the remaining audit items.
+
+### Added
+
+- `describe(info)` returns a one-line summary for logs or UI text, such as `Google Chrome 150.0.0.0 on Windows 10 (Desktop)`. It is exported from the root and from `ua-inspect/labels`.
+- `isInApp(info)` is true for an in-app browser or a mini-app and narrows `context.type`.
+- `isWebView(info)` is true for `mode: 'webview'` and narrows `browser.mode`.
+- The root entry exports all three helpers.
+
+### Changed
+
+- OS matching now runs once per parse and reuses the User-Agent candidates when Client Hints are present. Results are unchanged.
+- The README documents two deliberate limits: any product ending in `bot`, `spider`, or `crawler` is an unclassified bot, and a repeated `user-agent` header joins with `, ` before parsing.
+
+### Internal
+
+- Added tests for `describe`, `isInApp`, `isWebView`, and the LIFF mini-app case.
+- Added the new helpers to the compile-checked examples and the packed consumer fixtures.
+
+## 1.3.0 — 2026-11-09
+
+Resolves the browser identity for known host apps and lands the remaining small fixes from the audit.
+
+### Added
+
+- `isIPadOS(info)` narrows `os.name` to `'ipados'`. `isIPad` remains the broader check for the OS or the `iPad` model.
+- A development warning when `parse()` receives a value that is neither a string nor `null` nor `undefined`.
+- Context rows can declare metadata products to ignore. TikTok, TikTok Lite, and Discord use the new `ignores` list.
+
+### Changed
+
+- Known host-app metadata no longer hides the browser a WebView runs on. TikTok and TikTok Lite Android strings report `chrome-mobile` with the Chrome build, and Discord desktop reports `chrome`. The unaccounted-product guard still drops a fallback browser for unknown products, so a fork with no catalog row remains `null`.
+- `detect()` on an iPad in desktop mode now reports the Safari `Version/` token as the iPadOS version instead of `null`.
+- `isIPad` documentation states that it is not a type predicate. Use `isIPadOS` when `os.name` needs to be narrowed.
+- `readHeader` documents that a string array joins with `, `.
+- The `Version.patch` documentation states that it is the third numeric segment, not a SemVer patch number.
+
+### Internal
+
+- Removed the `labelOf` wrapper in device resolution.
+- Shared the development warning state between `parse()` and `is()`.
+- Added a test that pins the comment-group model limit for Instagram-style strings.
+
+### Notes
+
+- The remaining P2 items are REF-01 (resolve OS candidates once), NIT-01 (generic bot suffix), NIT-03 (array User-Agent header), and NIT-06 (optional helpers).
+
+## 1.2.0 — 2026-11-09
+
+Adds root convenience exports, version helpers, development query warnings, and the documentation and AI context needed to use the package without reading the whole README.
+
+### Added
+
+- Root exports: `is`, `isBot`, `isMobile`, `isTablet`, `isDesktop`, `isIPad`, `atLeast`, `labels`, and the `Query` type. The subpaths remain for smaller bundles.
+- `atLeast(version, minimum)` compares a `Version` against a dotted minimum and returns `false` for a null version or a malformed minimum.
+- `Version.toString()` returns the dotted version, so template strings and `String()` work.
+- Development warnings in `is()` for unknown query keys and empty queries. Production is silent, and the return value is unchanged.
+- `llms.txt`, `AGENTS.md`, `CONTRIBUTING.md`, compile-checked examples under `docs/examples`, framework recipes, and a stable-id snapshot test.
+- Playground: the copied example includes the parsed Client Hints, and the mode, User-Agent, and hints are stored in the URL so a scenario can be shared.
+- Bundle and package budgets in the package check.
+
+### Changed
+
+- The README now has a table of contents, quickstart, common mistakes, troubleshooting, a 1.0 id migration table, and framework recipes.
+- `parse`, `parseRequest`, `detect`, `Version`, `is`, `atLeast`, and `labels` carry JSDoc and examples in the published declarations.
+- The package check verifies that public declarations carry JSDoc and that the README links the AI context pack.
+- The `Version` interface now includes `toString(): string`. A manually constructed `Version` object must add it; versions returned by the parser already have it.
+
+### Notes
+
+- REV-01 in the backlog, the in-app and Electron browser identity policy, remains a product decision. Detection output for those strings did not change in this release.
+
+## 1.1.2 — 2026-11-09
+
+Fixes the CommonJS TypeScript declarations and the silent data loss in the Client Hints merge, and validates the hint model and CPU evidence.
+
+### Fixed
+
+- CommonJS TypeScript consumers resolve `dist/cjs/*.d.ts` for `require`, so a `module: Node16` project no longer fails with `TS1479`. The consumer check now compiles an ESM and a CommonJS TypeScript project from the packed tarball.
+- A low-entropy `Sec-CH-UA` hint no longer reduces the browser version the User-Agent reports. The hint keeps its value when it names a different major or carries more segments, so `Chrome/150.0.0.0` with `Sec-CH-UA: ...v="150"` still reports `150.0.0.0`.
+- `Sec-CH-UA-Model` now passes the same validation as a User-Agent model. Placeholders such as `K`, locales such as `en-US`, metadata, and values longer than 48 characters are ignored.
+- A bitness hint without an architecture hint is ignored, so a result never pairs a 64-bit architecture with 32 bits.
+- `is()` no longer narrows a field that a query widened to `Query` did not name.
+- `parseRequest()` treats an unreadable header value (`null`, a number, or an empty array) as missing instead of throwing a `TypeError`.
+- The `labels` example in the README compiles under `strict`.
+- Documented fixture counts match the corpus (27 first-party captures and 109 dimension fixtures).
+
+### Changed
+
+- `parseRequest()` and `detect()` keep the User-Agent version when a low-entropy hint only carries the major. Server analytics that relied on the major-only value now see the full build number the User-Agent already reported.
+- A bitness-only hint no longer fills `cpu.bitness`. Use an architecture hint to report a CPU.
+
+### Tests
+
+- Added regressions for the CommonJS declaration path, low-entropy hints, invalid hint models, lone bitness, widened queries, malformed headers, and the documented fixture counts.
+- Added a compile-checked quickstart under `docs/examples/quickstart.ts`.
+
 ## 1.1.1 — 2026-11-06
 
 Ships the browser and in-app ids that 1.1.0 announced but did not include, and fixes the iOS 26 platform freeze.

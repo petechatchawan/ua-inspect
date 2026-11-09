@@ -5,7 +5,7 @@ import { CPUS, type CPUArchitecture } from './catalog/cpus';
 import { DEVICE_TYPES, type DeviceType } from './catalog/devices';
 import { OPERATING_SYSTEMS, type OSId } from './catalog/os';
 import { VENDORS, type VendorId } from './catalog/vendors';
-import type { ContextId, EngineId } from './types';
+import type { ContextId, EngineId, UAInfo, Version } from './types';
 
 function labelsOf<K extends string>(
     rows: Readonly<Record<K, { readonly label: string }>>,
@@ -32,6 +32,9 @@ const CONTEXT_LABELS: Readonly<Record<ContextId, string>> = {
 /**
  * Display names for the stable IDs in a result. Results carry IDs, so a program branches on a
  * lowercase ID and shows `labels.browser[info.browser.name]` to a person.
+ *
+ * @example
+ * const browser = info.browser.name ? labels.browser[info.browser.name] : 'Unknown';
  */
 export const labels: {
     readonly browser: Readonly<Record<BrowserId, string>>;
@@ -52,3 +55,47 @@ export const labels: {
     client: labelsOf(CLIENTS),
     context: CONTEXT_LABELS,
 };
+
+function formatVersion(label: string, version: Version | null): string {
+    return version === null ? label : `${label} ${version.full}`;
+}
+
+/**
+ * A one-line human summary of a result. Useful for logs and UI text.
+ *
+ * @example
+ * describe(parse(userAgent)); // 'Google Chrome 150.0.0.0 on Windows 10 (Desktop)'
+ */
+export function describe(info: UAInfo): string {
+    const parts: string[] = [];
+    if (info.client.name !== null) {
+        parts.push(formatVersion(labels.client[info.client.name], info.client.version));
+    } else if (info.client.token !== null) {
+        parts.push(
+            info.client.type === null
+                ? info.client.token
+                : `${info.client.token} (${info.client.type})`,
+        );
+    } else if (info.browser.name !== null) {
+        parts.push(formatVersion(labels.browser[info.browser.name], info.browser.version));
+    } else {
+        parts.push('Unknown browser');
+    }
+
+    if (info.browser.mode === 'webview') parts.push('WebView');
+    else if (info.browser.mode === 'headless') parts.push('headless');
+
+    if (info.os.name !== null) {
+        parts.push(`on ${formatVersion(labels.os[info.os.name], info.os.version)}`);
+    }
+    if (info.device.type !== null) parts.push(`(${labels.device[info.device.type]})`);
+    if (
+        info.context.name !== null &&
+        (info.context.type === 'in-app-browser' || info.context.type === 'mini-app')
+    ) {
+        parts.push(`in ${labels.context[info.context.name]}`);
+    } else if (info.context.type === 'pwa') {
+        parts.push('as installed web app');
+    }
+    return parts.join(' ');
+}

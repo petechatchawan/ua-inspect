@@ -1436,7 +1436,13 @@
         "src": "observed:user-supplied@2026-11-04",
         "expect": {
             "browser": {
-                "name": null,
+                "name": "chrome-mobile",
+                "version": {
+                    "full": "110.0.5481.153",
+                    "major": 110,
+                    "minor": 0,
+                    "patch": 5481
+                },
                 "family": "chromium",
                 "mode": "webview"
             },
@@ -1460,6 +1466,7 @@
                     "full": "28.3.4"
                 }
             }
-        }
+        },
+        "note": "Known TikTok metadata tokens are ignored for this context, so the Chrome WebView identity is reported."
     }
 ]

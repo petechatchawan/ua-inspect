@@ -1,4 +1,18 @@
 export { parse } from './parse';
+export {
+    atLeast,
+    is,
+    isBot,
+    isDesktop,
+    isIPad,
+    isIPadOS,
+    isInApp,
+    isMobile,
+    isTablet,
+    isWebView,
+} from './check';
+export type { Query } from './check';
+export { describe, labels } from './labels';
 export type {
     AppId,
     BrowserFamily,

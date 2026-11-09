@@ -93,6 +93,29 @@ describe('Client Hints enrichment', () => {
         });
     });
 
+    it('keeps the User-Agent build detail when a low-entropy hint reports only the major', () => {
+        const result = enrich(parse(chromeUA), {
+            ua: chromeUA,
+            clientHints: hints({ brands: [{ brand: 'Google Chrome', version: '150' }] }),
+            runtime: null,
+        });
+        expect(result.browser.version).toEqual({
+            full: '150.0.0.0',
+            major: 150,
+            minor: 0,
+            patch: 0,
+        });
+    });
+
+    it('lets a hint with a different major replace the User-Agent version', () => {
+        const result = enrich(parse(chromeUA), {
+            ua: chromeUA,
+            clientHints: hints({ brands: [{ brand: 'Google Chrome', version: '151' }] }),
+            runtime: null,
+        });
+        expect(result.browser.version?.full).toBe('151');
+    });
+
     it('does not apply a Chrome version to an incompatible Edge identity', () => {
         const edge = parse(`${chromeUA} Edg/150.0.0.0`);
         const result = enrich(edge, {
@@ -201,14 +224,33 @@ describe('Client Hints enrichment', () => {
         expect(result.cpu).toEqual({ architecture: 'x86', bitness: null });
     });
 
-    it('preserves bitness when architecture remains unknown', () => {
+    it('ignores bitness when the architecture remains unknown', () => {
         const base = parse('CustomAgent/1.0');
         const result = enrich(base, {
             ua: base.ua,
             clientHints: hints({ bitness: 64 }),
             runtime: null,
         });
-        expect(result.cpu).toEqual({ architecture: null, bitness: 64 });
+        expect(result.cpu).toEqual({ architecture: null, bitness: null });
+    });
+
+    it.each([
+        [
+            'x86_64',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/150.0.0.0 Safari/537.36',
+        ],
+        [
+            'arm64',
+            'Mozilla/5.0 (Linux; Android 14; Pixel 8) arm64 AppleWebKit/537.36 Chrome/150.0.0.0 Mobile Safari/537.36',
+        ],
+    ] as const)('ignores a lone 32-bit hint for a %s User-Agent', (architecture, ua) => {
+        const base = parse(ua);
+        const result = enrich(base, {
+            ua,
+            clientHints: hints({ bitness: 32 }),
+            runtime: null,
+        });
+        expect(result.cpu).toEqual({ architecture, bitness: 64 });
     });
 
     it('enriches an established Chromium product from matching Chromium hints', () => {

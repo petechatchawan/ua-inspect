@@ -1,4 +1,15 @@
-import { is, isBot, isDesktop, isIPad, isMobile, isTablet } from '../../src/check';
+import {
+    is,
+    isBot,
+    isDesktop,
+    isIPad,
+    isIPadOS,
+    isInApp,
+    isMobile,
+    isTablet,
+    isWebView,
+} from '../../src/check';
+import { resolve } from '../../src/core/resolve';
 import { parse } from '../../src/parse';
 import type { UAInfo } from '../../src/types';
 
@@ -60,11 +71,14 @@ void assertTypes;
 
 describe('is', () => {
     it('matches every key of the query', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         expect(
             is(chromeAndroid, { browser: 'chrome-mobile', os: 'android', device: 'mobile' }),
         ).toBe(true);
         expect(is(chromeAndroid, { browser: 'chrome-mobile', os: 'ios' })).toBe(false);
         expect(is(chromeAndroid, {})).toBe(true);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('empty query'));
+        warn.mockRestore();
     });
 
     it('matches any value of an array', () => {
@@ -100,6 +114,37 @@ describe('is', () => {
     });
 });
 
+describe('host helpers', () => {
+    it('names an app WebView', () => {
+        expect(isWebView(lineWebView)).toBe(true);
+        expect(isWebView(edgeWindows)).toBe(false);
+        expect(isInApp(lineWebView)).toBe(true);
+        expect(isInApp(edgeWindows)).toBe(false);
+    });
+
+    it('treats a LIFF mini-app as an in-app context', () => {
+        const liff = resolve(lineWebView.ua, null, {
+            standalonePWA: null,
+            liffInClient: true,
+            touchMac: null,
+        });
+
+        expect(liff.context.type).toBe('mini-app');
+        expect(isInApp(liff)).toBe(true);
+    });
+
+    it('narrows the mode and the context type', () => {
+        if (isWebView(lineWebView)) {
+            const mode: 'webview' = lineWebView.browser.mode;
+            void mode;
+        }
+        if (isInApp(lineWebView)) {
+            const type: 'in-app-browser' | 'mini-app' = lineWebView.context.type;
+            void type;
+        }
+    });
+});
+
 describe('device helpers', () => {
     it('reads the device type directly', () => {
         expect(isMobile(chromeAndroid)).toBe(true);
@@ -108,6 +153,12 @@ describe('device helpers', () => {
         expect(isTablet(chromeAndroid)).toBe(false);
         expect(isDesktop(edgeWindows)).toBe(true);
         expect(isDesktop(chromeAndroid)).toBe(false);
+    });
+
+    it('names iPadOS separately from the iPad model', () => {
+        expect(isIPadOS(ipad)).toBe(true);
+        expect(isIPadOS(chromeAndroid)).toBe(false);
+        expect(isIPadOS(parse('Discord/52.0 (iPad; iOS 14.4; Scale/2.00)'))).toBe(false);
     });
 
     it('names an iPad by OS or by model', () => {
@@ -127,6 +178,10 @@ describe('device helpers', () => {
         if (isTablet(ipad)) {
             const type: 'tablet' = ipad.device.type;
             void type;
+        }
+        if (isIPadOS(ipad)) {
+            const os: 'ipados' = ipad.os.name;
+            void os;
         }
         if (isDesktop(edgeWindows)) {
             const type: 'desktop' = edgeWindows.device.type;

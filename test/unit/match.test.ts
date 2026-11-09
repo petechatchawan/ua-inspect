@@ -1,11 +1,13 @@
 import {
     compileMatcher,
+    mergeVersion,
     pick,
     strongestVersion,
     type Candidate,
     type RowSpec,
 } from '../../src/core/match';
-import { scan } from '../../src/core/scan';
+import { readVersion, scan } from '../../src/core/scan';
+import type { Version } from '../../src/types';
 
 type Id = 'generic' | 'special' | 'other' | 'gated';
 
@@ -18,6 +20,12 @@ const ROWS: Readonly<Record<Id, RowSpec<Id>>> = {
 
 function candidate(id: Id, overrides: Partial<Candidate<Id>> = {}): Candidate<Id> {
     return { id, source: 'ua', version: null, fallback: false, signal: null, ...overrides };
+}
+
+function version(full: string): Version {
+    const parsed = readVersion(full);
+    if (parsed === null) throw new Error(`Invalid test version: ${full}`);
+    return parsed;
 }
 
 const matcher = compileMatcher(ROWS);
@@ -139,13 +147,7 @@ describe('pick', () => {
 });
 
 describe('strongestVersion', () => {
-    it('takes the version of the strongest source that has one', () => {
-        const version = (full: string) => ({
-            full,
-            major: Number.parseInt(full, 10),
-            minor: null,
-            patch: null,
-        });
+    it('takes the hint version when it names a different major', () => {
         const candidates = [
             candidate('special', { version: version('1.0') }),
             candidate('special', { source: 'hints', version: version('2.0') }),
@@ -154,5 +156,45 @@ describe('strongestVersion', () => {
 
         expect(strongestVersion(candidates, 'special')).toEqual(version('2.0'));
         expect(strongestVersion(candidates, 'other')).toBeNull();
+    });
+
+    it('keeps User-Agent detail when the hint only names the major', () => {
+        const candidates = [
+            candidate('special', { version: version('150.0.0.0') }),
+            candidate('special', { source: 'hints', version: version('150') }),
+        ];
+
+        expect(strongestVersion(candidates, 'special')).toEqual(version('150.0.0.0'));
+    });
+
+    it('uses a more detailed hint version', () => {
+        const candidates = [
+            candidate('special', { version: version('150.0.0.0') }),
+            candidate('special', { source: 'hints', version: version('150.0.7339.80') }),
+        ];
+
+        expect(strongestVersion(candidates, 'special')).toEqual(version('150.0.7339.80'));
+    });
+});
+
+describe('mergeVersion', () => {
+    it('keeps the more detailed version when the majors agree', () => {
+        expect(mergeVersion(version('150'), version('150.0.0.0'))).toEqual(version('150.0.0.0'));
+    });
+
+    it('keeps the preferred version when the majors differ', () => {
+        expect(mergeVersion(version('151'), version('150.0.0.0'))).toEqual(version('151'));
+    });
+
+    it('keeps a more detailed preferred version', () => {
+        expect(mergeVersion(version('150.0.7339.80'), version('150.0.0.0'))).toEqual(
+            version('150.0.7339.80'),
+        );
+    });
+
+    it('falls back to whichever side exists', () => {
+        expect(mergeVersion(null, version('150'))).toEqual(version('150'));
+        expect(mergeVersion(version('150'), null)).toEqual(version('150'));
+        expect(mergeVersion(null, null)).toBeNull();
     });
 });

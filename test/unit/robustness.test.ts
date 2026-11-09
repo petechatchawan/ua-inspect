@@ -43,7 +43,9 @@ describe('bounded User-Agent input', () => {
     it.each([undefined, null, 42, {}])(
         'treats non-string input %p as an empty User-Agent',
         (input) => {
+            const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
             expect(parse(input as unknown as string)).toEqual(parse(''));
+            warn.mockRestore();
         },
     );
 

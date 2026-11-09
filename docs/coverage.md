@@ -93,6 +93,10 @@ Context rows are not browsers. They describe the host app wrapping the WebView.
 Have (9): `discord`, `facebook`, `instagram`, `line`, `messenger`, `tiktok`, `tiktok-lite`, `twitter`,
 `wechat`
 
+Known host-app metadata products are ignored for the context row that owns them. TikTok and
+TikTok Lite Android WebViews report `chrome-mobile`, and Discord desktop reports `chrome`. An
+unknown string with the same products still reports no browser.
+
 | id            | UA token                                                    | Tier | Status                                                                 |
 | ------------- | ----------------------------------------------------------- | ---- | ---------------------------------------------------------------------- |
 | `tiktok`      | `musical_ly_*` / `tiktok*` / `trill_*` / `BytedanceWebview` | 1    | Shipped; `app_version/<semver>` wins, the token suffix is the fallback |
@@ -195,7 +199,7 @@ There are two sets of stored strings:
   `src` of the form `observed:<where>@<date>`, and the test fails without it. 27 entries today.
 - `test/data/<dimension>/<name>.json` (dimensions `browser`, `context`, `cpu`, `device`, `engine`, `os`) hold
   one real string per case and carry no `src`. Each file holds only one name, such as `browser/chrome.json`
-  or `os/android.json`, and strings with no name go in that dimension's `unknown.json`. 107 entries today.
+  or `os/android.json`, and strings with no name go in that dimension's `unknown.json`. 109 entries today.
 - Nothing composed goes in: a made-up string proves nothing about a real client.
 
 ## 7. Known limits

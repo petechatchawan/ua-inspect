@@ -5,6 +5,11 @@ import {
 } from './playground-view-model';
 import { createCurrentDetectionEffect } from './current-detection-effect';
 import { createManualDetectionEffect } from './manual-detection-effect';
+import {
+    createPermalinkState,
+    readPlaygroundPermalink,
+    writePlaygroundPermalink,
+} from './playground-permalink';
 import { createPlaygroundStore } from './playground-store';
 import type { PlaygroundMode, PlaygroundNotification } from './playground-state';
 import { createAppHeader } from '../components/app-header';
@@ -40,7 +45,11 @@ export function createPlaygroundApp(
 ): PlaygroundApp {
     const detectionService = options.detectionService ?? createUADetectionService();
     const clipboardService = options.clipboardService ?? createClipboardService();
-    const store = createPlaygroundStore();
+    const initialPermalink =
+        typeof location === 'undefined' ? null : readPlaygroundPermalink(location.search);
+    const store = createPlaygroundStore(
+        initialPermalink ? createPermalinkState(initialPermalink) : undefined,
+    );
     const currentEffect = createCurrentDetectionEffect({ store, detectionService });
     const manualEffect = createManualDetectionEffect({ store, detectionService });
     let started = false;
@@ -149,6 +158,7 @@ export function createPlaygroundApp(
 
     const render = (): void => {
         const state = store.getState();
+        if (started) writePlaygroundPermalink(state);
         modeSelector.update({ mode: state.mode });
         currentPanel.element.hidden = state.mode !== 'current';
         manualPanel.element.hidden = state.mode !== 'manual';
@@ -179,8 +189,7 @@ export function createPlaygroundApp(
             code: createCodeExample({
                 mode: state.mode,
                 userAgent: state.manual.userAgent,
-                hasClientHints:
-                    state.mode === 'manual' && parsedHints.ok && parsedHints.headers !== null,
+                headers: state.mode === 'manual' && parsedHints.ok ? parsedHints.headers : null,
             }),
         });
     };
@@ -193,6 +202,11 @@ export function createPlaygroundApp(
         start() {
             if (started || destroyed) return;
             started = true;
+            const state = store.getState();
+            if (state.mode === 'manual') {
+                if (state.manual.userAgent.trim()) void manualEffect.parseNow();
+                return;
+            }
             void currentEffect.detect();
         },
         selectMode: (mode) => store.dispatch({ type: 'mode-selected', mode }),

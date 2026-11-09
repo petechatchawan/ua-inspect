@@ -1,4 +1,4 @@
-import { parseRequest } from '../../src/server';
+import { parseRequest, type HeaderRecord } from '../../src/server';
 
 const chromeUA =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
@@ -44,16 +44,30 @@ describe('parseRequest', () => {
         });
     });
 
-    it('falls back to significant versions when the full-version list is malformed', () => {
+    it('keeps the User-Agent detail when only a major hint is present', () => {
         const result = parseRequest({
             'user-agent': chromeUA,
             'sec-ch-ua': '"Chromium";v="150", "Google Chrome";v="150"',
+        });
+        expect(result.browser.name).toBe('chrome');
+        expect(result.browser.version).toEqual({
+            full: '150.0.0.0',
+            major: 150,
+            minor: 0,
+            patch: 0,
+        });
+    });
+
+    it('falls back to significant versions when the full-version list is malformed', () => {
+        const result = parseRequest({
+            'user-agent': chromeUA,
+            'sec-ch-ua': '"Chromium";v="151", "Google Chrome";v="151"',
             'sec-ch-ua-full-version-list': '"Google Chrome";v="oops"',
         });
         expect(result.browser.name).toBe('chrome');
         expect(result.browser.version).toEqual({
-            full: '150',
-            major: 150,
+            full: '151',
+            major: 151,
             minor: null,
             patch: null,
         });
@@ -92,5 +106,21 @@ describe('parseRequest', () => {
             'sec-ch-ua': '"Not_A Brand";v="99", "Brave";v="150", "Chromium";v="150"',
         });
         expect(result.browser.name).toBe('brave');
+    });
+
+    it.each([
+        ['a null value', null],
+        ['a numeric value', 42],
+        ['an object value', {}],
+        ['an empty array', []],
+    ])('treats %s as a missing User-Agent', (_label, value) => {
+        const result = parseRequest({ 'user-agent': value } as unknown as HeaderRecord);
+        expect(result).toEqual(parseRequest({}));
+    });
+
+    it('joins a string array User-Agent', () => {
+        const result = parseRequest({ 'user-agent': ['curl/8.4.0'] });
+        expect(result.ua).toBe('curl/8.4.0');
+        expect(result.client.name).toBe('curl');
     });
 });

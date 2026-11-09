@@ -27,6 +27,21 @@ describe('createPlaygroundApp', () => {
         app.destroy();
     });
 
+    it('restores a manual permalink and parses its User-Agent', async () => {
+        window.history.replaceState(null, '', '/?mode=manual&ua=curl%2F8.4.0');
+        const detectionService = service();
+        const app = createPlaygroundApp({ detectionService });
+
+        app.start();
+
+        await vi.waitFor(() => expect(detectionService.parseUserAgent).toHaveBeenCalled());
+        expect(detectionService.parseUserAgent).toHaveBeenCalledWith('curl/8.4.0');
+        expect(app.element.querySelector('#manual-user-agent-panel')?.hasAttribute('hidden')).toBe(
+            false,
+        );
+        app.destroy();
+    });
+
     it('reports clipboard failure without losing results', async () => {
         const app = createPlaygroundApp({
             detectionService: service(),

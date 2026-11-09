@@ -43,6 +43,15 @@ describe('device model', () => {
         ).toBeNull();
     });
 
+    it('does not read a model from a second comment group', () => {
+        const ua =
+            'Mozilla/5.0 (Linux; Android 13; K) AppleWebKit/537.36 (KHTML, like Gecko) ' +
+            'Mobile Safari/537.36 Instagram 350.0.0.0 Android ' +
+            '(33/13; 420dpi; samsung; SM-S948B; en_US)';
+
+        expect(parse(ua).device.model).toBeNull();
+    });
+
     it('keeps the original letter case', () => {
         expect(parse(android('sm-s928b')).device.model).toBe('sm-s928b');
     });
@@ -142,5 +151,22 @@ describe('device from Client Hints', () => {
             vendor: 'google',
             model: 'Pixel 8',
         });
+    });
+
+    it.each(['K', 'en-US', 'wv', 'HMSCore 6.13.0.302', 'M'.repeat(60)])(
+        'ignores invalid hint model %s',
+        (model) => {
+            expect(resolve(pixel, hints({ model }), null).device).toMatchObject({
+                vendor: 'google',
+                model: 'Pixel 8',
+            });
+        },
+    );
+
+    it('does not invent a model from an invalid hint when the UA has none', () => {
+        const noModel =
+            'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 ' +
+            'Chrome/130.0.0.0 Mobile Safari/537.36';
+        expect(resolve(noModel, hints({ model: 'K' }), null).device.model).toBeNull();
     });
 });

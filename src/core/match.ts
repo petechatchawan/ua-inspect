@@ -242,12 +242,31 @@ export function pick<K extends string, X>(
     return { id: ids.size === 1 ? survivors[0].id : null, survivors };
 }
 
+function versionDetail(version: Version): number {
+    return version.full.split('.').length;
+}
+
+/**
+ * Chooses between two reports of the same product version. A low-entropy Client Hint carries
+ * only the major, so it must not erase the build detail that the User-Agent already reports. A
+ * different major means the sources disagree about the release, and the stronger source wins.
+ */
+export function mergeVersion(preferred: Version | null, fallback: Version | null): Version | null {
+    if (preferred === null) return fallback;
+    if (fallback === null) return preferred;
+    if (preferred.major !== fallback.major) return preferred;
+    return versionDetail(preferred) >= versionDetail(fallback) ? preferred : fallback;
+}
+
 export function strongestVersion<K extends string, X>(
     candidates: readonly Candidate<K, X>[],
     id: K,
 ): Version | null {
-    const own = candidates
-        .filter((candidate) => candidate.id === id && candidate.version !== null)
-        .sort((a, b) => SOURCE_STRENGTH[b.source] - SOURCE_STRENGTH[a.source]);
+    const own = candidates.filter((candidate) => candidate.id === id && candidate.version !== null);
+    const hinted = own.find((candidate) => candidate.source === 'hints')?.version ?? null;
+    if (hinted !== null) {
+        const fromUa = own.find((candidate) => candidate.source === 'ua')?.version ?? null;
+        return mergeVersion(hinted, fromUa);
+    }
     return own.length > 0 ? own[0].version : null;
 }

@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyReadmeCatalog } from './catalog-coverage.mjs';
+import { verifyBudgets } from './verify-budgets.mjs';
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const nodeCommand = process.execPath;
@@ -25,14 +26,27 @@ try {
     if (!subpaths.includes('.')) throw new Error('The export map is missing the package root.');
     for (const subpath of subpaths) {
         const entry = packageJson.exports[subpath];
-        for (const condition of ['types', 'import', 'require']) {
-            const target = entry[condition];
-            if (!target)
+        for (const condition of ['import', 'require']) {
+            const branch = entry?.[condition];
+            if (branch === null || typeof branch !== 'object') {
                 throw new Error(`Export ${subpath} is missing the ${condition} condition.`);
-            if (!existsSync(path.join(root, target)))
-                throw new Error(
-                    `Export ${subpath} ${condition} target ${target} does not exist. Run npm run build first.`,
-                );
+            }
+            for (const targetName of ['types', 'default']) {
+                const target = branch[targetName];
+                if (!target) {
+                    throw new Error(
+                        `Export ${subpath} ${condition} is missing the ${targetName} target.`,
+                    );
+                }
+                if (!existsSync(path.join(root, target))) {
+                    throw new Error(
+                        `Export ${subpath} ${condition} target ${target} does not exist. Run npm run build first.`,
+                    );
+                }
+            }
+        }
+        if (typeof entry.default !== 'string' || !existsSync(path.join(root, entry.default))) {
+            throw new Error(`Export ${subpath} has no existing default target.`);
         }
     }
 
@@ -51,7 +65,7 @@ try {
     }
 
     const packedPaths = report.files.map((file) => file.path);
-    for (const required of ['README.md', 'LICENSE']) {
+    for (const required of ['README.md', 'LICENSE', 'llms.txt']) {
         if (!packedPaths.includes(required))
             throw new Error(`Package is missing required documentation: ${required}`);
     }
@@ -69,6 +83,7 @@ try {
             `Package contains forbidden implementation/test files: ${forbiddenFiles.join(', ')}`,
         );
     }
+    await verifyBudgets(root, report);
     const tarballPath = path.join(workspace, report.filename);
     execFileSync(
         nodeCommand,
