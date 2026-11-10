@@ -150,12 +150,12 @@ real traffic.
 | id        | Model prefixes / tokens                     | ww % | th % |
 | --------- | ------------------------------------------- | ---- | ---- |
 | `infinix` | `Infinix `, `X68`, `X6`, `X5`, `X7`, `X3`   | 2.10 | 2.86 |
-| `honor`   | `HONOR `, `GDI-`, `JDN-`, `BKL-`            | 2.06 | 1.17 |
+| `honor`   | `HONOR `, `GDI-`, `JDN-`, `BKL-`, `BVL-`    | 2.06 | 1.17 |
 | `tecno`   | `TECNO `, `KC`                              | 1.61 | 0.59 |
 | `nothing` | `A06`, `A05`, `A02`, `A14`, `A01`           | 0.39 | 0.06 |
 | `zte`     | `ZTE `, `BLADE`                             | 0.17 | 0.41 |
 | `asus`    | `ASUS`                                      | 0.04 | 0.06 |
-| `nokia`   | `Nokia `, `Nokia-`                          | 0.10 | 0.04 |
+| `nokia`   | `Nokia `, `Nokia-`, `TA-`                   | 0.10 | 0.04 |
 | `lg`      | `LG-`, `LM-`                                | 0.07 | —    |
 | `itel`    | `itel `, `A6`, `A5`, `A7`, `A1`, `P5`, `L6` | 0.28 | 0.03 |
 
@@ -210,6 +210,10 @@ There are two sets of stored strings:
   form-factor marker. Guessing `mobile` from the OS alone would misclassify tablets.
 - Vendor rows match model-code prefixes, so an unknown prefix from a known brand reports
   `device.vendor: null` rather than a guess.
+- Oppo and OnePlus share the `CPH` model prefix, and their tablets share `OPD`. The OnePlus row
+  lists its known `CPH` and `OPD` codes in full. An unlisted `CPH` code falls through to the Oppo
+  prefix, and an unlisted `OPD` code reports no vendor. Add OnePlus codes to that row when a
+  capture or a public model listing proves them.
 - A phone string that omits every `Mobile` token (Samsung Internet on `Pixel 8 Pro`) reports
   `device.type: 'tablet'`: Android without a form-factor marker is the documented tablet shape.
   Fixing it needs a per-browser override, which would guess for tablets too.

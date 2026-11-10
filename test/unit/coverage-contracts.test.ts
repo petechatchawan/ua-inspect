@@ -40,7 +40,7 @@ describe('supported contract matrix', () => {
         ['Android 14; SM-S928B Build/UP1A.231005.007) Mobile', 'samsung'],
         ['Android 14; Redmi Note 13 Build/UP1A) Mobile', 'xiaomi'],
         ['Android 14; HUAWEI P60 Build/UP1A) Mobile', 'huawei'],
-        ['Android 14; CPH2609 Build/UP1A) Mobile', 'oppo'],
+        ['Android 14; CPH2609 Build/UP1A) Mobile', 'oneplus'],
         ['Android 14; V2309 Build/UP1A) Mobile', 'vivo'],
         ['Android 14; ONEPLUS A6013 Build/UP1A) Mobile', 'oneplus'],
         ['Android 14; moto g84 Build/UP1A) Mobile', 'motorola'],

@@ -38,7 +38,7 @@ describe('supported detector matrix', () => {
         ['Mozilla/5.0 (Linux; Android 14; SM-S928B Build/UP1A) Mobile', 'samsung'],
         ['Mozilla/5.0 (Linux; Android 14; Redmi Note 13 Build/UP1A) Mobile', 'xiaomi'],
         ['Mozilla/5.0 (Linux; Android 14; HUAWEI Pura 70 Build/HUAWEI) Mobile', 'huawei'],
-        ['Mozilla/5.0 (Linux; Android 14; CPH2609 Build/UP1A) Mobile', 'oppo'],
+        ['Mozilla/5.0 (Linux; Android 14; CPH2609 Build/UP1A) Mobile', 'oneplus'],
         ['Mozilla/5.0 (Linux; Android 14; V2312 Build/UP1A) Mobile', 'vivo'],
         ['Mozilla/5.0 (Linux; Android 14; ONEPLUS A6013 Build/UP1A) Mobile', 'oneplus'],
         ['Mozilla/5.0 (Linux; Android 14; moto g84 Build/UP1A) Mobile', 'motorola'],

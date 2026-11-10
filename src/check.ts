@@ -148,6 +148,25 @@ function versionSegments(version: Version): readonly number[] {
     return version.full.split('.').map((segment) => Number(segment));
 }
 
+// `readVersion` reads the leading version of a User-Agent token, so it accepts `150abc`. A minimum
+// passed by a caller is a whole version, and trailing text is a mistake rather than a signal.
+function readMinimum(minimum: string): Version | null {
+    if (minimum.length === 0) return null;
+    let digits = 0;
+    for (let index = 0; index < minimum.length; index++) {
+        const code = minimum.charCodeAt(index);
+        if (code === 46) {
+            if (digits === 0) return null;
+            digits = 0;
+        } else if (code >= 48 && code <= 57) {
+            digits++;
+        } else {
+            return null;
+        }
+    }
+    return digits === 0 ? null : readVersion(minimum);
+}
+
 /**
  * True when `version` is at least `minimum`, compared segment by segment. Missing segments count
  * as zero. A null version, or a malformed minimum, never satisfies the minimum.
@@ -158,7 +177,7 @@ function versionSegments(version: Version): readonly number[] {
  * }
  */
 export function atLeast(version: Version | null, minimum: string): boolean {
-    const target = readVersion(minimum);
+    const target = readMinimum(minimum);
     if (version === null || target === null) return false;
     const left = versionSegments(version);
     const right = versionSegments(target);

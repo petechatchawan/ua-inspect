@@ -50,7 +50,10 @@ describe('atLeast', () => {
         expect(atLeast(null, '150')).toBe(false);
     });
 
-    it.each(['', 'nope', 'v150'])('rejects the malformed minimum %p', (minimum) => {
-        expect(atLeast(version('150'), minimum)).toBe(false);
-    });
+    it.each(['', 'nope', 'v150', '150abc', '150.', '150..1'])(
+        'rejects the malformed minimum %p',
+        (minimum) => {
+            expect(atLeast(version('150'), minimum)).toBe(false);
+        },
+    );
 });
