@@ -2,6 +2,28 @@
 
 All notable changes to `ua-inspect` are documented in this file.
 
+> Versions 1.1.2, 1.2.0, and 1.3.0 are listed below but are not available on npm. Their changes
+> first shipped in 1.4.0.
+
+## Unreleased
+
+Fixes OnePlus CPH detection and widens the model prefixes for five existing vendor rows.
+
+### Fixed
+
+- OnePlus `CPH` model codes, including the OnePlus 11, 12, 12R, 13, 13R, Open, and Nord families, report `oneplus` instead of `oppo`. Oppo and OnePlus share the `CPH` prefix, so the OnePlus codes are listed in full.
+- `atLeast()` rejects a minimum that is not a dotted version, such as `150abc`, `150.`, or `150..1`. The documentation already promised this.
+
+### Changed
+
+- `Xiaomi <model>`, Honor `BVL-`, Sony `XQ-`, Nokia `TA-`, and the listed OnePlus pad `OPD` codes now report their vendor instead of `null`.
+
+### Internal
+
+- [docs/api.md](docs/api.md) is part of the public documentation and is checked by `pack:check`.
+- The ESLint flat config declares the test and script globals. CI runs the lint step only on Node.js 20 and later because ESLint 10 does not support Node.js 18.
+- The release steps push the version tag with `master`, so the publish workflow sees the tag on `HEAD`.
+
 ## 1.5.0 — 2026-11-09
 
 Adds a null-safe label helper, a Thai quickstart, and compile-checked Hono and Fastify recipes.

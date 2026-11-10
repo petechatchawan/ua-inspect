@@ -58,6 +58,6 @@ Renaming `browser.name` for phone builds in `1.1.0` was a breaking change shippe
 ## Releasing
 
 1. Update `CHANGELOG.md`.
-2. Run `npm version <version>` and push `master`.
-3. Push the `v<version>` tag. The publish workflow only publishes when `HEAD` carries that tag and the repository is canonical.
+2. Run `npm version <version>`.
+3. Push the tag with `master` in one push: `git push origin master v<version>`. The publish workflow only publishes when `HEAD` carries that tag and the repository is canonical. A `master` push that lands before the tag exists skips publication.
 4. The tarball is built from the tree that passed `npm run check`, so do not publish from an older branch.

@@ -335,7 +335,7 @@ is(info, { browser: 'android' });  // error: an OS id is not a browser id
 is(info, { vendor: 'Samsung' });   // error: vendor ids are lowercase
 ```
 
-An unknown field never matches. `device: 'tablet'` is exact, so a tablet is not `mobile`.
+An unknown id never matches. At runtime, an unknown query key is ignored and warns in development. `device: 'tablet'` is exact, so a tablet is not `mobile`.
 
 The device helpers read `device.type` directly and narrow it. `isMobile`, `isTablet` and
 `isDesktop` match one type each. `isIPadOS` narrows `os.name` to `ipados`, and `isIPad` is
@@ -759,6 +759,7 @@ See [CONTRIBUTING.md](https://github.com/petechatchawan/ua-inspect/blob/master/C
 The package is new, so models have little prior training data for its API. Read [llms.txt](https://github.com/petechatchawan/ua-inspect/blob/master/llms.txt) before generating code. It has the canonical imports, six recipes, the pitfalls, and the result contract in one page.
 
 - [llms.txt](https://github.com/petechatchawan/ua-inspect/blob/master/llms.txt): one-page cheat sheet for code generation.
+- [docs/api.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/api.md): the public API reference for every entry point.
 - [AGENTS.md](https://github.com/petechatchawan/ua-inspect/blob/master/AGENTS.md): repository layout, commands, and catalog rules for an agent working in this repo.
 - [CONTRIBUTING.md](https://github.com/petechatchawan/ua-inspect/blob/master/CONTRIBUTING.md): change checklist and semver policy.
 - [docs/backlog.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/backlog.md): known and planned work.

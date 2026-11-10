@@ -91,5 +91,6 @@ if (isWebView(info)) { /* browser.mode is webview */ }
 ## Links
 
 - [README](https://github.com/petechatchawan/ua-inspect/blob/master/README.md): full API, dimensions, and examples.
+- [docs/api.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/api.md): the public API reference for every entry point.
 - [CONTRIBUTING](https://github.com/petechatchawan/ua-inspect/blob/master/CONTRIBUTING.md): change checklist and semver policy.
 - [docs/backlog.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/backlog.md): known and planned work.

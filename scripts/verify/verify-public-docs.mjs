@@ -38,7 +38,7 @@ for (const target of targets) {
 }
 
 const readme = await readFile(path.join(root, 'README.md'), 'utf8');
-for (const file of ['llms.txt', 'AGENTS.md']) {
+for (const file of ['llms.txt', 'docs/api.md', 'AGENTS.md']) {
     if (!readme.includes(file)) failures.push(`README.md does not link ${file}.`);
 }
 
@@ -47,6 +47,7 @@ for (const fragment of [
     "from 'ua-inspect'",
     'ua-inspect/server',
     'ua-inspect/browser',
+    'docs/api.md',
     '## Pitfalls',
 ]) {
     if (!llms.includes(fragment)) failures.push(`llms.txt is missing ${fragment}.`);
