@@ -1,6 +1,6 @@
 # ua-inspect audit and backlog
 
-Point-in-time review of `ua-inspect@1.1.1` on 2026-11-09, followed by the `1.1.2`, `1.2.0`, `1.3.0`, and `1.4.0` releases. It covers code, packaging, tests, docs, the developer experience of the package, and the experience of using it with AI-assisted coding.
+Point-in-time review of `ua-inspect@1.1.1` on 2026-11-09, followed by the `1.1.2` through `1.6.0` work. It covers code, packaging, tests, docs, the developer experience of the package, and the experience of using it with AI-assisted coding.
 
 The review is based on:
 
@@ -12,7 +12,9 @@ The review is based on:
 - measuring bundle size and throughput
 - reading the playground source and its screenshots
 
-P0 shipped in `1.1.2`, P1 in `1.2.0`, REV-01 in `1.3.0`, and the remaining P2 items in `1.4.0`.
+Only `1.0.0`, `1.0.1`, `1.1.0`, `1.1.1`, `1.4.0`, `1.5.0` and `1.6.0` were published to npm. The `1.1.2`, `1.2.0` and `1.3.0` changes first shipped in `1.4.0`, so those version numbers below name the work rather than a separate registry release.
+
+P0 landed in the `1.1.2` work, P1 in the `1.2.0` work, REV-01 in the `1.3.0` work, and the remaining P2 items in `1.4.0`.
 
 ## Legend
 
@@ -35,7 +37,8 @@ Size: **S** is under half a day, **M** is half a day to two days, **L** is more 
 | `1.3.0` | REV-01 and selected P2 fixes                                       | no behavior change unless listed, tests stay above the current coverage thresholds                                                                    |
 | `1.4.0` | Remaining P2: REF-01, NIT-06, and two documented decisions         | all P2 items are resolved or explicitly kept                                                                                                          |
 | `1.5.0` | DX: `label`, Thai quickstart, Hono and Fastify recipes, Node 24 CI | new helper is documented, examples compile, and CI covers Node 18 to 24                                                                               |
-| `1.6.0` | Catalog Tier 2 from `docs/coverage.md`                             | every new row has a real captured string and a fixture test                                                                                           |
+| `1.6.0` | OnePlus vendor fix, vendor prefixes, API reference, release docs   | the published tarball keeps the Node 18 runtime and passes `npm run check`                                                                            |
+| `1.7.0` | Catalog Tier 2 from `docs/coverage.md`                             | every new row has a real captured string and a fixture test                                                                                           |
 | `2.0.0` | only if a breaking interface change is accepted                    | a migration guide and a major version                                                                                                                 |
 
 No item in this backlog requires `2.0.0`.
@@ -48,7 +51,7 @@ No item in this backlog requires `2.0.0`.
 | P1       | DX-01 to DX-04, DOC-01 to DOC-03, REV-01, REV-02, SEM-01, TEST-02 to TEST-04 | `1.2.0` |
 | P2       | REF-01 to REF-07, NIT-01 to NIT-06                                           | `1.4.0` |
 
-The product decisions are resolved: REV-01 shipped in `1.3.0`, and NIT-01 and NIT-03 were kept and documented in `1.4.0`.
+The product decisions are resolved: REV-01 landed in the `1.3.0` work and first shipped in `1.4.0`, and NIT-01 and NIT-03 were kept and documented in `1.4.0`.
 
 ## P0: fix before the next patch
 
@@ -637,12 +640,14 @@ These are not required for correctness. Ship them when the area is already being
 
 | Area        | Current                       | Add                                              |
 | ----------- | ----------------------------- | ------------------------------------------------ |
-| Public API  | 525 tests, 99.84% statements  | regressions for FIX-01 to FIX-06                 |
+| Public API  | 598 tests, 98.15% statements  | regressions for FIX-01 to FIX-06                 |
 | Consumers   | ESM TS + CJS runtime          | CJS TS fixture, docs snippets                    |
 | Docs        | README id check               | snippet compilation, count check, JSDoc presence |
 | Stability   | catalog references and cycles | stable id snapshot                               |
 | Performance | hostile input timing          | bundle and pack budgets                          |
 | Playground  | 42 tests and e2e              | copied snippet validity, permalink restore       |
+
+The statement figure moved from 99.84% under Vitest 3 to 98.15% under Vitest 5 because Vitest 5 uses AST-aware V8 remapping. The test count rose from 525 to 598; no tests were removed.
 
 ## Non-goals
 

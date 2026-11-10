@@ -31,6 +31,9 @@ Fixes OnePlus CPH detection and widens the model prefixes for five existing vend
 - Upgrade Vitest and the V8 coverage provider to 5.1.0. Critical test-runner advisories drop to none, and development now requires Node.js 22.12 or later. The published package still supports Node.js 18.
 - The remaining moderate audit advisories are in ESLint 10 and typescript-eslint. The audit offers only major downgrades, and none ship in the package.
 - Raise the root bundle budget to 12,000 bytes gzip so catalog additions have headroom.
+- Add a real OnePlus 12R `CPH2609` capture to the device fixtures.
+- Pin CI to Ubuntu 24.04 and update `upload-artifact` to v5.
+- Correct the release history in `docs/backlog.md`.
 
 ## 1.5.0 — 2026-11-09
 
