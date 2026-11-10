@@ -199,7 +199,7 @@ There are two sets of stored strings:
   `src` of the form `observed:<where>@<date>`, and the test fails without it. 27 entries today.
 - `test/data/<dimension>/<name>.json` (dimensions `browser`, `context`, `cpu`, `device`, `engine`, `os`) hold
   one real string per case and carry no `src`. Each file holds only one name, such as `browser/chrome.json`
-  or `os/android.json`, and strings with no name go in that dimension's `unknown.json`. 109 entries today.
+  or `os/android.json`, and strings with no name go in that dimension's `unknown.json`. 110 entries today.
 - Nothing composed goes in: a made-up string proves nothing about a real client.
 
 ## 7. Known limits

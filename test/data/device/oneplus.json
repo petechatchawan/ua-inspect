@@ -1,0 +1,14 @@
+[
+    {
+        "id": "device-oneplus-12r",
+        "ua": "Mozilla/5.0 (Linux; Android 14; CPH2609) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.6613.88 Mobile Safari/537.36",
+        "note": "Captured from whatmyuseragent.com/device/oneplus on 2026-11-10.",
+        "expect": {
+            "device": {
+                "type": "mobile",
+                "vendor": "oneplus",
+                "model": "CPH2609"
+            }
+        }
+    }
+]
