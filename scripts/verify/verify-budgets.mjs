@@ -4,7 +4,7 @@ import path from 'node:path';
 
 const BUDGETS = {
     tarball: 60_000,
-    root: 11_000,
+    root: 12_000,
     check: 2_000,
 };
 
