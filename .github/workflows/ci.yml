@@ -45,7 +45,7 @@ jobs:
             - run: npm run detection:check
             - name: Upload detector coverage
               if: always()
-              uses: actions/upload-artifact@v5
+              uses: actions/upload-artifact@v7
               with:
                   name: detector-coverage
                   path: coverage
@@ -74,7 +74,7 @@ jobs:
                   npm run playground:typecheck 2>&1 | tee apps/playground/typecheck.log
             - name: Upload type-check diagnostics
               if: always()
-              uses: actions/upload-artifact@v5
+              uses: actions/upload-artifact@v7
               with:
                   name: playground-typecheck
                   path: apps/playground/typecheck.log
@@ -89,7 +89,7 @@ jobs:
               run: npm run test:e2e --prefix apps/playground
             - name: Upload Playwright diagnostics
               if: ${{ !cancelled() }}
-              uses: actions/upload-artifact@v5
+              uses: actions/upload-artifact@v7
               with:
                   name: playground-playwright
                   path: |

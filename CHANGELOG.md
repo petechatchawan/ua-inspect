@@ -32,7 +32,7 @@ Fixes OnePlus CPH detection and widens the model prefixes for five existing vend
 - The remaining moderate audit advisories are in ESLint 10 and typescript-eslint. The audit offers only major downgrades, and none ship in the package.
 - Raise the root bundle budget to 12,000 bytes gzip so catalog additions have headroom.
 - Add a real OnePlus 12R `CPH2609` capture to the device fixtures.
-- Pin CI to Ubuntu 24.04 and update `upload-artifact` to v5.
+- Pin CI to Ubuntu 24.04 and update `upload-artifact` to v7.
 - Correct the release history in `docs/backlog.md`.
 
 ## 1.5.0 — 2026-11-09
