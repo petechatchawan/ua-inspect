@@ -5,7 +5,7 @@ All notable changes to `ua-inspect` are documented in this file.
 > Versions 1.1.2, 1.2.0, and 1.3.0 are listed below but are not available on npm. Their changes
 > first shipped in 1.4.0.
 
-## Unreleased
+## 1.6.0 — 2026-11-10
 
 Fixes OnePlus CPH detection and widens the model prefixes for five existing vendor rows.
 
