@@ -23,10 +23,12 @@ jobs:
                   node-version: ${{ matrix.node-version }}
             - run: npm ci
             - run: npm run format:check
-            # ESLint 10 supports Node.js 20.19 and later. Node 18 still runs the tests and build.
+            # ESLint 10 needs Node 20.19+ and Vitest 5 needs Node 22.12+. Lower versions still
+            # build and verify the packed consumers.
             - run: npm run lint
               if: matrix.node-version != 18
             - run: npm test
+              if: matrix.node-version >= 22
             - run: npm run build
             - run: npm run pack:check
 

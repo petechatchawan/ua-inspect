@@ -17,6 +17,8 @@ npm run check            # format, lint, typecheck, coverage, build, declaration
 npm run playground:check # packed tarball installed into the playground, plus e2e
 ```
 
+Development tests need Node.js 22.12 or later for Vitest 5. The package runtime stays on Node.js 18 and later.
+
 Use a writable npm cache when the default cache is not writable:
 
 ```bash

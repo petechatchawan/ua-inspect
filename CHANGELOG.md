@@ -24,6 +24,14 @@ Fixes OnePlus CPH detection and widens the model prefixes for five existing vend
 - The ESLint flat config declares the test and script globals. CI runs the lint step only on Node.js 20 and later because ESLint 10 does not support Node.js 18.
 - The release steps push the version tag with `master`, so the publish workflow sees the tag on `HEAD`.
 
+## Unreleased
+
+### Internal
+
+- Upgrade Vitest and the V8 coverage provider to 5.1.0. Critical test-runner advisories drop to none, and development now requires Node.js 22.12 or later. The published package still supports Node.js 18.
+- The remaining moderate audit advisories are in ESLint 10 and typescript-eslint. The audit offers only major downgrades, and none ship in the package.
+- Raise the root bundle budget to 12,000 bytes gzip so catalog additions have headroom.
+
 ## 1.5.0 — 2026-11-09
 
 Adds a null-safe label helper, a Thai quickstart, and compile-checked Hono and Fastify recipes.

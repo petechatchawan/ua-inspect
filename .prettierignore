@@ -1,6 +1,7 @@
 # Build output (also in .gitignore; listed here because Prettier does not read .gitignore)
 dist/
 coverage/
+.vitest/
 apps/playground/dist/
 apps/playground/playwright-report/
 apps/playground/test-results/

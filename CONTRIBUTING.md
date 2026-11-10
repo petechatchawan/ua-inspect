@@ -10,6 +10,8 @@ npm test
 npm run check
 ```
 
+Development requires Node.js 22.12 or later for Vitest 5. The published package still supports Node.js 18 and later, and CI builds and verifies the packed consumers on Node 18.
+
 `npm run check` runs formatting, lint, typecheck, coverage, build, declaration documentation, and the packed-tarball consumer checks. Use a writable npm cache if the default one is not writable:
 
 ```bash
