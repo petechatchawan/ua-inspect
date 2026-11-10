@@ -20,7 +20,7 @@ concurrency:
 
 jobs:
     release-context:
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
         outputs:
             can-publish: ${{ steps.context.outputs.can-publish }}
         steps:
@@ -73,7 +73,7 @@ jobs:
     publish:
         needs: release-context
         if: needs.release-context.outputs.can-publish == 'true'
-        runs-on: ubuntu-latest
+        runs-on: ubuntu-24.04
 
         steps:
             - uses: actions/checkout@v6
@@ -107,7 +107,7 @@ jobs:
 
             - name: Upload validation log
               if: always() && steps.validation.outcome != 'success'
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v5
               with:
                   name: npm-release-validation-log
                   path: validation.log
@@ -135,7 +135,7 @@ jobs:
 
             - name: Upload publish log
               if: always() && steps.publish.outcome == 'failure'
-              uses: actions/upload-artifact@v4
+              uses: actions/upload-artifact@v5
               with:
                   name: npm-release-publish-log
                   path: publish.log
