@@ -77,10 +77,9 @@ export function compileMatcher<K extends string, X = unknown>(
                 wordPrefixes.push({ id, signal, prefix: key.slice(0, -1) });
             } else {
                 const keyWords = key.split(' ');
-                longestKey.set(
-                    keyWords[0],
-                    Math.max(longestKey.get(keyWords[0]) ?? 0, keyWords.length),
-                );
+                const first = keyWords[0];
+                if (first !== undefined)
+                    longestKey.set(first, Math.max(longestKey.get(first) ?? 0, keyWords.length));
                 const entries = wordIndex.get(key);
                 if (entries) entries.push({ id, signal });
                 else wordIndex.set(key, [{ id, signal }]);
@@ -170,7 +169,9 @@ export function compileMatcher<K extends string, X = unknown>(
 
             const words = longestKey.size === 0 && wordPrefixes.length === 0 ? [] : scanned.words;
             for (let start = 0; start < words.length; start++) {
-                const longest = longestKey.get(words[start]);
+                const word = words[start];
+                if (word === undefined) continue;
+                const longest = longestKey.get(word);
                 if (longest === undefined) continue;
                 let key = '';
                 for (
@@ -178,7 +179,7 @@ export function compileMatcher<K extends string, X = unknown>(
                     length <= longest && start + length <= words.length;
                     length++
                 ) {
-                    key = length === 1 ? words[start] : `${key} ${words[start + length - 1]}`;
+                    key = length === 1 ? word : `${key} ${words[start + length - 1]}`;
                     for (const { id, signal } of wordIndex.get(key) ?? []) {
                         accept(id, signal, words[start + length + (signal.skip ?? 0)] ?? null);
                     }
@@ -189,6 +190,7 @@ export function compileMatcher<K extends string, X = unknown>(
             // digits that follow the prefix are the version and the next word is only the fallback.
             for (let start = 0; start < words.length; start++) {
                 const word = words[start];
+                if (word === undefined) continue;
                 for (const { id, signal, prefix } of wordPrefixes) {
                     if (!word.startsWith(prefix)) continue;
                     const rest = word.slice(prefix.length);
@@ -239,7 +241,7 @@ export function pick<K extends string, X>(
         );
     }
     const ids = new Set(survivors.map((candidate) => candidate.id));
-    return { id: ids.size === 1 ? survivors[0].id : null, survivors };
+    return { id: ids.size === 1 ? (survivors[0]?.id ?? null) : null, survivors };
 }
 
 function versionDetail(version: Version): number {
@@ -268,5 +270,5 @@ export function strongestVersion<K extends string, X>(
         const fromUa = own.find((candidate) => candidate.source === 'ua')?.version ?? null;
         return mergeVersion(hinted, fromUa);
     }
-    return own.length > 0 ? own[0].version : null;
+    return own[0]?.version ?? null;
 }

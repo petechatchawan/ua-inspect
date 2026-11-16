@@ -29,12 +29,15 @@ describe('catalog references', () => {
 
     it.each(Object.entries(CATALOGS))('%s: `beats` has no cycle', (_, rows) => {
         const edges = rows as Readonly<Record<string, { readonly beats?: readonly string[] }>>;
-        const reaches = (from: string, target: string, seen = new Set<string>()): boolean =>
-            (edges[from].beats ?? []).some(
+        const reaches = (from: string, target: string, seen = new Set<string>()): boolean => {
+            const edge = edges[from];
+            if (edge === undefined) return false;
+            return (edge.beats ?? []).some(
                 (next) =>
                     next === target ||
                     (!seen.has(next) && (seen.add(next), reaches(next, target, seen))),
             );
+        };
         for (const id of Object.keys(edges))
             expect(reaches(id, id), `${id} beats itself`).toBe(false);
     });
@@ -119,7 +122,11 @@ describe('labels', () => {
         for (const [kind, ids] of Object.entries(expected)) {
             const table = labels[kind as keyof typeof labels] as Readonly<Record<string, string>>;
             expect(Object.keys(table).sort()).toEqual([...ids].sort());
-            for (const id of ids) expect(table[id].length, `${kind}.${id}`).toBeGreaterThan(0);
+            for (const id of ids) {
+                const label = table[id];
+                expect(label, `${kind}.${id}`).toBeDefined();
+                expect((label ?? '').length, `${kind}.${id}`).toBeGreaterThan(0);
+            }
         }
     });
 });
