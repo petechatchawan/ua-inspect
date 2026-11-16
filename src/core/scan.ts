@@ -122,12 +122,12 @@ export function readVersion(raw: string | null): Version | null {
         .split('.')
         .map((segment) => (segment.length > 0 ? Number(segment) : Number.NaN));
     const [major, minor, patch] = numbers;
-    if (!Number.isSafeInteger(major)) return null;
+    if (major === undefined || !Number.isSafeInteger(major)) return null;
     return createVersion(
         full,
         major,
-        Number.isSafeInteger(minor) ? minor : null,
-        Number.isSafeInteger(patch) ? patch : null,
+        Number.isSafeInteger(minor) ? (minor ?? null) : null,
+        Number.isSafeInteger(patch) ? (patch ?? null) : null,
     );
 }
 
@@ -251,8 +251,8 @@ export function scan(input: string): Scan {
         parts,
         partGroups,
         rawPart(index) {
-            if (text.length !== lower.length) return parts[index];
-            return text.slice(spans[index * 2], spans[index * 2 + 1]).trim();
+            if (text.length !== lower.length) return parts[index] ?? '';
+            return text.slice(spans[index * 2] ?? 0, spans[index * 2 + 1] ?? text.length).trim();
         },
         get names() {
             if (names === null) names = new Set(products.map((product) => product.name));

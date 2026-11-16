@@ -10,7 +10,7 @@ const app = new Hono();
 app.use('*', async (context, next) => {
     const info = parseRequest(context.req.raw);
     if (isBot(info)) return context.text('Forbidden', 403);
-    await next();
+    return next();
 });
 
 export { app };

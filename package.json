@@ -82,7 +82,7 @@
     },
     "sideEffects": false,
     "scripts": {
-        "lint": "eslint './src/**/*.ts'",
+        "lint": "eslint .",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
         "clean": "rm -rf dist",

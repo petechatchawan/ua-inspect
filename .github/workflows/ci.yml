@@ -27,6 +27,10 @@ jobs:
             # build and verify the packed consumers.
             - run: npm run lint
               if: matrix.node-version != 18
+            # The build compiles `src` only. This compiles the tests and the documented examples,
+            # which carry the type-level assertions.
+            - run: npm run typecheck
+              if: matrix.node-version >= 22
             - run: npm test
               if: matrix.node-version >= 22
             - run: npm run build

@@ -125,7 +125,7 @@ function resolveBrowser(
         engine = signal?.engine !== undefined ? signal.engine : row.engine;
     } else {
         const families = new Set(survivors.map((candidate) => BROWSERS[candidate.id].family));
-        if (families.size === 1) family = [...families][0];
+        if (families.size === 1) family = [...families][0] ?? null;
     }
     if (family === null && chromiumBrand) family = 'chromium';
 
@@ -236,8 +236,10 @@ function scaleVersion(id: OSId, version: Version | null, source: 'ua' | 'hints')
         return mapped === undefined ? version : readVersion(mapped);
     }
     const table = scale?.ua;
-    if (table && Object.prototype.hasOwnProperty.call(table, version.full))
-        return readVersion(table[version.full]);
+    if (table && Object.prototype.hasOwnProperty.call(table, version.full)) {
+        const mapped = table[version.full];
+        if (mapped !== undefined) return readVersion(mapped);
+    }
     return version;
 }
 
@@ -289,7 +291,7 @@ function resolveCPU(scanned: Scan, hints: ClientHints | null): CPUInfo {
     const base: CPUInfo =
         id === null
             ? { architecture: null, bitness: null }
-            : { architecture: id, bitness: survivors[0].signal?.bitness ?? null };
+            : { architecture: id, bitness: survivors[0]?.signal?.bitness ?? null };
     if (!hints) return base;
 
     const hinted = normalizeArchitecture(hints.architecture, hints.bitness);
