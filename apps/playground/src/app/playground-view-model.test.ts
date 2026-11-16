@@ -9,10 +9,34 @@ import {
 describe('playground view models', () => {
     it('keeps browser mode and context dimensions separate', () => {
         const summary = createDetectionSummary(lineLiffResult);
-        expect(summary.browser).toBe('Chrome 150.0.7871.46');
+        expect(summary.browser).toBe('Google Chrome 150.0.7871.46');
         expect(summary.mode).toBe('WebView');
         expect(summary.contextHost).toBe('LINE 26.11.0');
-        expect(summary.contextSurface).toBe('LIFF');
+        expect(summary.contextSurface).toBe('LINE LIFF');
+    });
+
+    it('shows the published labels for every id', () => {
+        const browserName = createResultCards(lineLiffResult)
+            .find((card) => card.id === 'browser')
+            ?.rows.find((row) => row.label === 'Name')?.value;
+        expect(browserName).toBe('Google Chrome');
+
+        const deviceResult = {
+            ...chromeResult,
+            device: { ...chromeResult.device, type: 'xr' as const },
+        };
+        expect(createDetectionSummary(deviceResult).device).toBe('XR headset');
+    });
+
+    it('keeps a display name for the PWA context type', () => {
+        const pwaResult = {
+            ...chromeResult,
+            context: { type: 'pwa' as const, name: 'pwa' as const, app: null, version: null },
+        };
+        const type = createResultCards(pwaResult)
+            .find((card) => card.id === 'context')
+            ?.rows.find((row) => row.label === 'Type')?.value;
+        expect(type).toBe('PWA');
     });
 
     it('uses Not detected for absent values', () => {
