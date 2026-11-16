@@ -7,6 +7,7 @@ function humanize(value: string | null | undefined): string {
     if (!value) return NOT_DETECTED;
     const special: Readonly<Record<string, string>> = {
         webview: 'WebView',
+        // `pwa` is a context type here. `labels.context.pwa` names the context id instead.
         pwa: 'PWA',
         'in-app-browser': 'In-App Browser',
         'mini-app': 'Mini App',
@@ -15,16 +16,6 @@ function humanize(value: string | null | undefined): string {
         'http-client': 'HTTP Client',
         'email-client': 'Email Client',
         'media-player': 'Media Player',
-        'smart-tv': 'Smart TV',
-        xr: 'XR',
-        x86_64: 'x86_64',
-        arm64: 'ARM64',
-        ipados: 'iPadOS',
-        ios: 'iOS',
-        macos: 'macOS',
-        chromeos: 'ChromeOS',
-        liff: 'LIFF',
-        line: 'LINE',
     };
     return (
         special[value] ??
@@ -35,13 +26,9 @@ function humanize(value: string | null | undefined): string {
     );
 }
 
-function formatProduct(product: {
-    readonly name: string | null;
-    readonly version: { readonly full: string } | null;
-}): string {
-    if (!product.name) return NOT_DETECTED;
-    const name = humanize(product.name);
-    return product.version?.full ? `${name} ${product.version.full}` : name;
+function formatProduct(name: string | null, version: { readonly full: string } | null): string {
+    if (!name) return NOT_DETECTED;
+    return version?.full ? `${name} ${version.full}` : name;
 }
 
 export interface DetectionSummaryViewModel {
@@ -72,17 +59,18 @@ function row(label: string, value: string | null | undefined): ResultRowViewMode
 
 export function createDetectionSummary(result: UAInfo): DetectionSummaryViewModel {
     return {
-        browser: formatProduct(result.browser),
+        browser: formatProduct(
+            result.browser.name ? labels.browser[result.browser.name] : null,
+            result.browser.version,
+        ),
         mode: humanize(result.browser.mode),
-        contextHost: result.context.app
-            ? formatProduct({
-                  name: labels.context[result.context.app],
-                  version: result.context.version,
-              })
-            : NOT_DETECTED,
-        contextSurface: humanize(result.context.name),
-        os: formatProduct(result.os),
-        device: humanize(result.device.type),
+        contextHost: formatProduct(
+            result.context.app ? labels.context[result.context.app] : null,
+            result.context.version,
+        ),
+        contextSurface: result.context.name ? labels.context[result.context.name] : NOT_DETECTED,
+        os: formatProduct(result.os.name ? labels.os[result.os.name] : null, result.os.version),
+        device: result.device.type ? labels.device[result.device.type] : NOT_DETECTED,
     };
 }
 
@@ -92,7 +80,7 @@ export function createResultCards(result: UAInfo): readonly ResultCardViewModel[
             id: 'browser',
             title: 'Browser',
             rows: [
-                row('Name', result.browser.name ? humanize(result.browser.name) : null),
+                row('Name', result.browser.name ? labels.browser[result.browser.name] : null),
                 row('Version', result.browser.version?.full),
                 row('Family', humanize(result.browser.family)),
                 row('Mode', humanize(result.browser.mode)),
@@ -103,7 +91,7 @@ export function createResultCards(result: UAInfo): readonly ResultCardViewModel[
             title: 'Context',
             rows: [
                 row('Type', humanize(result.context.type)),
-                row('Surface', result.context.name ? humanize(result.context.name) : null),
+                row('Surface', result.context.name ? labels.context[result.context.name] : null),
                 row('Host app', result.context.app ? labels.context[result.context.app] : null),
                 row('Host version', result.context.version?.full),
             ],
@@ -124,7 +112,7 @@ export function createResultCards(result: UAInfo): readonly ResultCardViewModel[
             id: 'engine',
             title: 'Engine',
             rows: [
-                row('Name', result.engine.name ? humanize(result.engine.name) : null),
+                row('Name', result.engine.name ? labels.engine[result.engine.name] : null),
                 row('Version', result.engine.version?.full),
             ],
         },
@@ -132,7 +120,7 @@ export function createResultCards(result: UAInfo): readonly ResultCardViewModel[
             id: 'os',
             title: 'Operating System',
             rows: [
-                row('Name', result.os.name ? humanize(result.os.name) : null),
+                row('Name', result.os.name ? labels.os[result.os.name] : null),
                 row('Version', result.os.version?.full),
             ],
         },
@@ -140,7 +128,7 @@ export function createResultCards(result: UAInfo): readonly ResultCardViewModel[
             id: 'device',
             title: 'Device',
             rows: [
-                row('Type', humanize(result.device.type)),
+                row('Type', result.device.type ? labels.device[result.device.type] : null),
                 row('Vendor', result.device.vendor ? labels.vendor[result.device.vendor] : null),
                 row('Model', result.device.model),
             ],
@@ -149,7 +137,10 @@ export function createResultCards(result: UAInfo): readonly ResultCardViewModel[
             id: 'cpu',
             title: 'CPU',
             rows: [
-                row('Architecture', humanize(result.cpu.architecture)),
+                row(
+                    'Architecture',
+                    result.cpu.architecture ? labels.cpu[result.cpu.architecture] : null,
+                ),
                 row('Bitness', result.cpu.bitness ? `${result.cpu.bitness}-bit` : null),
             ],
         },

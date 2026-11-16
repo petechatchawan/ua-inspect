@@ -7,6 +7,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyReadmeCatalog } from './catalog-coverage.mjs';
 import { verifyBudgets } from './verify-budgets.mjs';
+import { verifyDocSnippets } from './verify-doc-snippets.mjs';
 
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
 const nodeCommand = process.execPath;
@@ -53,6 +54,7 @@ try {
     // The packed tarball is only as good as the tree it was built from, so compare the documentation
     // with this build before packing it.
     const advertisedIds = await verifyReadmeCatalog(root);
+    const docSnippets = await verifyDocSnippets(root);
 
     const output = execFileSync(
         npmCommand,
@@ -97,6 +99,9 @@ try {
         `Package contents verified: ${report.files.length} files, ${report.unpackedSize} unpacked bytes, ${report.name}@${report.version}.`,
     );
     console.log(`README ids verified against the build: ${advertisedIds}.`);
+    console.log(
+        `Documentation snippets verified: ${docSnippets.files} files, ${docSnippets.imports} imports, ${docSnippets.labels} label references.`,
+    );
 } finally {
     await rm(workspace, { recursive: true, force: true });
 }

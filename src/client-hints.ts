@@ -1,4 +1,5 @@
 import type { CPUArchitecture } from './catalog/cpus';
+import { isDigit } from './core/scan';
 import type { BrandVersion, ClientHints } from './input';
 
 export interface NormalizedArchitecture {
@@ -56,7 +57,7 @@ export function isValidBrandVersion(value: string): boolean {
     let digitsInSegment = 0;
     for (let index = 0; index < value.length; index++) {
         const code = value.charCodeAt(index);
-        if (code >= 48 && code <= 57) {
+        if (isDigit(code)) {
             digitsInSegment++;
         } else if (code === 46 && digitsInSegment > 0) {
             digitsInSegment = 0;

@@ -24,7 +24,14 @@ import type {
     Version,
 } from '../types';
 import { resolveDevice } from './device';
-import { compileMatcher, mergeVersion, pick, strongestVersion, type Candidate } from './match';
+import {
+    compileMatcher,
+    mergeVersion,
+    pick,
+    strongestVersion,
+    winnerSignal,
+    type Candidate,
+} from './match';
 import { MAX_UA_LENGTH, readVersion, scan, type Scan } from './scan';
 
 const BROWSER_MATCHER = compileMatcher<BrowserId, BrowserSignal>(BROWSERS);
@@ -95,6 +102,8 @@ function hintCandidates(hints: ClientHints | null): Candidate<BrowserId, Browser
 
 interface BrowserResolution {
     readonly browser: BrowserInfo;
+    // `undefined` means no row declared an engine, so `resolveEngine` may infer one. `null` means
+    // the row declares none.
     readonly engine: EngineId | null | undefined;
 }
 
@@ -110,8 +119,7 @@ function resolveBrowser(
     const { id: picked, survivors } = pick(candidates, BROWSER_MATCHER.beats);
 
     const row = picked ? BROWSERS[picked] : null;
-    const signal =
-        survivors.find((candidate) => candidate.id === picked && candidate.signal)?.signal ?? null;
+    const signal = winnerSignal(picked, survivors);
     const dropped =
         picked !== null &&
         survivors.every((c) => c.fallback) &&
@@ -189,13 +197,8 @@ function resolveEngine(
 
     const gecko = scanned.products.find((product) => product.name === 'gecko');
     if (gecko && readVersion(gecko.version)) return geckoVersion();
-    if (
-        readVersion(
-            scanned.products.find((product) => product.name === 'applewebkit')?.version ?? null,
-        )
-    ) {
-        return webKitVersion();
-    }
+    const webkit = webKitVersion();
+    if (webkit.version !== null) return webkit;
     return { name: null, version: null };
 }
 
@@ -314,7 +317,7 @@ function resolveClient(scanned: Scan): ClientInfo {
     const candidates = CLIENT_MATCHER.find(scanned, null);
     const { id, survivors } = pick(candidates, CLIENT_MATCHER.beats);
     if (id !== null) {
-        const signal = survivors.find((candidate) => candidate.id === id)?.signal;
+        const signal = winnerSignal(id, survivors);
         return {
             type: CLIENTS[id].type,
             name: id,

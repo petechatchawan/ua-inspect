@@ -33,7 +33,7 @@ npm_config_cache=/tmp/ua-inspect-npm-cache npm run check
 ## Adding a catalog row
 
 1. Add the row to the matching file under `src/catalog`. A row is data: match signals, an optional `beats` list, a label, and the row's type-specific fields.
-2. Add a real captured string to `test/data/<dimension>/<name>.json`. Do not compose a string. If the capture is first-party, add it to `test/data/user-agents.json` with a `src` of the form `observed:<where>@<date>`.
+2. Add a real captured string. Every new vector under `test/data` needs a `src` with one of three prefixes and a date: `observed:<where>@YYYY-MM-DD`, `vendor-doc:<url>@YYYY-MM-DD`, or `corpus:<name>@YYYY-MM-DD`. A first-party capture goes in `test/data/user-agents.json`, which still requires `observed:`. A string for one dimension goes in `test/data/<dimension>/<name>.json`, keeping one name per file, with `note` explaining any deliberate difference. A composed string belongs in `test/unit`, not `test/data`.
 3. Run `npm test`. The catalog tests check `beats` references, cycles, duplicate brands and platforms, vendor prefix collisions, and labels.
 4. Run `npm run check`. It compares the README ids with the built catalog.
 

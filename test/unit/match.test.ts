@@ -3,6 +3,7 @@ import {
     mergeVersion,
     pick,
     strongestVersion,
+    winnerSignal,
     type Candidate,
     type RowSpec,
 } from '../../src/core/match';
@@ -143,6 +144,21 @@ describe('pick', () => {
         }
 
         expect([...outcomes]).toHaveLength(1);
+    });
+});
+
+describe('winnerSignal', () => {
+    it('returns the signal for the picked id and ignores another id', () => {
+        const picked = { product: 'Special' };
+        const survivors = [
+            candidate('other', { signal: { product: 'Other' } }),
+            candidate('special', { signal: picked }),
+        ];
+
+        expect(winnerSignal('special', survivors)).toBe(picked);
+        expect(winnerSignal('gated', survivors)).toBeNull();
+        expect(winnerSignal(null, survivors)).toBeNull();
+        expect(winnerSignal('other', [candidate('other')])).toBeNull();
     });
 });
 

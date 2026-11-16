@@ -7,7 +7,7 @@ Install with `npm install ua-inspect`.
 ## Imports
 
 ```ts
-import { atLeast, describe, is, isBot, isIPad, isIPadOS, isInApp, isWebView, label, labels, parse } from 'ua-inspect';
+import { atLeast, describe, is, isBot, isDesktop, isIPad, isIPadOS, isInApp, isMobile, isTablet, isWebView, label, labels, parse } from 'ua-inspect';
 import { parseRequest } from 'ua-inspect/server';
 import { detect } from 'ua-inspect/browser';
 ```

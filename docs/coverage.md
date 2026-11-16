@@ -198,11 +198,40 @@ There are two sets of stored strings:
 - `test/data/user-agents.json` holds this project's own captures. Every entry has a
   `src` of the form `observed:<where>@<date>`, and the test fails without it. 27 entries today.
 - `test/data/<dimension>/<name>.json` (dimensions `browser`, `context`, `cpu`, `device`, `engine`, `os`) hold
-  one real string per case and carry no `src`. Each file holds only one name, such as `browser/chrome.json`
+  one real string per case. Each file holds only one name, such as `browser/chrome.json`
   or `os/android.json`, and strings with no name go in that dimension's `unknown.json`. 110 entries today.
 - Nothing composed goes in: a made-up string proves nothing about a real client.
 
-## 7. Known limits
+Every new vector under `test/data` needs a `src` with one of three prefixes and an `@YYYY-MM-DD`
+date: `observed:<where>`, `vendor-doc:<url>`, or `corpus:<name>`. `user-agents.json` is stricter
+and accepts only `observed:`.
+
+The 110 per-dimension entries above predate that rule. `test/unit/user-agents.test.ts` holds their
+sorted ids as a snapshot, so the unproven set can only shrink: adding a vector without a `src`
+fails the test. A composed string belongs in `test/unit`, not in `test/data`.
+
+## 7. Post-resolution overrides
+
+Some behavior is deliberate and easy to miss. This table indexes the exceptions to the plain matcher
+path, whether the exception lives in code or in a catalog field.
+
+| Exception                            | Function                                  | Condition                                                                                                                                                         |
+| ------------------------------------ | ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Unaccounted-product fallback drop    | `resolveBrowser`, `hasUnaccountedProduct` | The picked browser is a fallback row and the string carries a top-level product that no browser row, context row, or `NEUTRAL_PRODUCTS` entry names.              |
+| Context `ignores`                    | `contextIgnores`                          | A context row lists the products its host app adds, so the drop above skips them.                                                                                 |
+| Old WebView mode                     | `isWebViewUserAgent`                      | A `wv` part is present, or `Version/4.0` appears before the first `Chrome/` product.                                                                              |
+| Blink epoch                          | `resolveBrowser`                          | The picked id is `chrome`, `chrome-mobile`, or `chromium` and its version is below `CHROME_BLINK_EPOCH` (28), so the engine becomes `webkit`.                     |
+| Frozen iOS and iPadOS version        | `unfrozenIOSVersion`                      | The platform version is 18 or 19 and a top-level `Version/` reports 26 or later, so the `Version/` value replaces it.                                             |
+| CPU hint compatibility               | `resolveCPU`                              | The hint names the same architecture without a bitness, or it names `arm` or `x86` while the User-Agent names `arm64` or `x86_64`, so the User-Agent value stays. |
+| Lone bitness                         | `resolveCPU`                              | Client Hints report a bitness without an architecture, so the field is ignored.                                                                                   |
+| LIFF and PWA overlay                 | `resolveContext`                          | Runtime evidence reports `liffInClient`, or `standalonePWA` with no matched context, so the context is replaced.                                                  |
+| iPad from a Macintosh string         | `resolve`                                 | Runtime evidence reports `touchMac` and the User-Agent reads `macos`, so the result becomes `ipados` with an `iPad` tablet.                                       |
+| Windows version scale (catalog data) | `scaleVersion`                            | An OS row carries a `scale` table or hint function, and the reported version is rewritten through it.                                                             |
+
+Try a catalog row field first. If code is required, add one named function with a test and a row in
+this table.
+
+## 8. Known limits
 
 - DuckDuckGo on iOS claims `Macintosh`, so the platform reads `macos` and the engine `blink`: that
   is what the string says, and an app-to-OS guess table would be a lie.
