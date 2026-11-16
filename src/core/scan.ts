@@ -66,7 +66,7 @@ function splitWords(lower: string): string[] {
     return words;
 }
 
-function isDigit(code: number): boolean {
+export function isDigit(code: number): boolean {
     return code >= 48 && code <= 57;
 }
 
@@ -91,6 +91,8 @@ function countSpaces(text: string): number {
     return spaces;
 }
 
+// A shared prototype keeps `toString` off each object, which matters because the scan loop
+// allocates one version per product.
 const VERSION_METHODS = {
     toString(this: Version): string {
         return this.full;

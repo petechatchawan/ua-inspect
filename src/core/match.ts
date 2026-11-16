@@ -1,5 +1,5 @@
 import type { Version } from '../types';
-import { readVersion, type Scan } from './scan';
+import { isDigit, readVersion, type Scan } from './scan';
 
 export type Source = 'ua' | 'hints';
 
@@ -195,11 +195,7 @@ export function compileMatcher<K extends string, X = unknown>(
                     if (!word.startsWith(prefix)) continue;
                     const rest = word.slice(prefix.length);
                     let digit = 0;
-                    while (digit < rest.length) {
-                        const code = rest.charCodeAt(digit);
-                        if (code >= 48 && code <= 57) break;
-                        digit++;
-                    }
+                    while (digit < rest.length && !isDigit(rest.charCodeAt(digit))) digit++;
                     accept(
                         id,
                         signal,
@@ -242,6 +238,18 @@ export function pick<K extends string, X>(
     }
     const ids = new Set(survivors.map((candidate) => candidate.id));
     return { id: ids.size === 1 ? (survivors[0]?.id ?? null) : null, survivors };
+}
+
+/** The signal of the first survivor for `picked`, or null when none carries one. */
+export function winnerSignal<K extends string, X>(
+    picked: K | null,
+    survivors: readonly Candidate<K, X>[],
+): Signal<X> | null {
+    if (picked === null) return null;
+    return (
+        survivors.find((candidate) => candidate.id === picked && candidate.signal !== null)
+            ?.signal ?? null
+    );
 }
 
 function versionDetail(version: Version): number {

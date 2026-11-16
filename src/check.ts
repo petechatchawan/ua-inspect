@@ -15,7 +15,7 @@ import type {
     VendorId,
     Version,
 } from './types';
-import { readVersion } from './core/scan';
+import { isDigit, readVersion } from './core/scan';
 import { IS_DEVELOPMENT, warnOnce } from './dev';
 
 type Many<T> = T | readonly T[];
@@ -158,7 +158,7 @@ function readMinimum(minimum: string): Version | null {
         if (code === 46) {
             if (digits === 0) return null;
             digits = 0;
-        } else if (code >= 48 && code <= 57) {
+        } else if (isDigit(code)) {
             digits++;
         } else {
             return null;
