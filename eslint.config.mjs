@@ -23,20 +23,44 @@ const restrictedSyntax = [
 
 export default [
     {
-        ignores: ['.git/**', 'coverage/**', 'dist/**', 'node_modules/**', 'apps/**', 'docs/**'],
+        ignores: [
+            '.git/**',
+            'coverage/**',
+            'dist/**',
+            'node_modules/**',
+            'apps/**',
+            // The consumer fixtures compile against the packed package name, so they are not part
+            // of a local tsconfig. `verify-consumers.mjs` compiles them from the tarball instead.
+            'scripts/verify/consumer-fixtures/**',
+        ],
     },
     js.configs.recommended,
     {
         files: ['**/*.ts'],
         languageOptions: {
             parser: tsParser,
-            parserOptions: { ecmaVersion: 2021, sourceType: 'module' },
+            parserOptions: {
+                ecmaVersion: 2021,
+                sourceType: 'module',
+                project: ['./tsconfig.test.json'],
+                tsconfigRootDir: import.meta.dirname,
+            },
             globals: { ...globals.node },
         },
         plugins: { '@typescript-eslint': tsPlugin },
         rules: {
             ...tsPlugin.configs.recommended.rules,
             'no-magic-numbers': 'off',
+        },
+    },
+    {
+        files: ['src/**/*.ts', 'test/**/*.ts', 'docs/examples/**/*.ts'],
+        rules: {
+            '@typescript-eslint/await-thenable': 'error',
+            '@typescript-eslint/no-floating-promises': 'error',
+            '@typescript-eslint/no-misused-promises': 'error',
+            '@typescript-eslint/only-throw-error': 'error',
+            '@typescript-eslint/switch-exhaustiveness-check': 'error',
         },
     },
     {

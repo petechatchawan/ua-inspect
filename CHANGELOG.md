@@ -29,7 +29,10 @@ Fixes OnePlus CPH detection and widens the model prefixes for five existing vend
 ### Internal
 
 - CI runs `npm run typecheck`, so the type-level assertions and the documented examples gate every pull request.
-- `npm run lint` covers `test` and `scripts`, not only `src`.
+- `npm run lint` covers `test` and `scripts`, not only `src`, and runs with type information.
+- The compiler enables `noUncheckedIndexedAccess`, `noFallthroughCasesInSwitch`, and `noImplicitReturns`. Every array read in the matcher and scanner that could be out of range is guarded.
+- Coverage thresholds rise to 97% statements, 92% branches, 98% functions, and 98% lines.
+- A seeded property test covers the never-throw and fixed-shape contract with 2,000 random inputs.
 - Upgrade Vitest and the V8 coverage provider to 5.1.0. Critical test-runner advisories drop to none, and development now requires Node.js 22.12 or later. The published package still supports Node.js 18.
 - The remaining moderate audit advisories are in ESLint 10 and typescript-eslint. The audit offers only major downgrades, and none ship in the package.
 - Raise the root bundle budget to 12,000 bytes gzip so catalog additions have headroom.
