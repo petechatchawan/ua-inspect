@@ -85,17 +85,21 @@ is(info, { app: 'line' }); // true ทั้ง LINE และ LIFF
 `parse()` บอกได้แค่ว่าเป็น LINE in-app browser ส่วน LIFF ต้องใช้ runtime adapter:
 
 ```ts
+import { is } from 'ua-inspect';
 import { detect } from 'ua-inspect/browser';
 
+const liff = { isInClient: () => true };
 const info = await detect({ liff });
 is(info, { context: 'liff' }); // true เมื่อ runtime ยืนยัน
 ```
+
+adapter ต้องการแค่ `isInClient(): boolean` ถ้าไม่มี method นี้ คืน `false` หรือ throw จะไม่ได้ผล LIFF
 
 ## ข้อควรระวัง
 
 - Chrome บนมือถือคือ `chrome-mobile` ไม่ใช่ `chrome`
 - Safari บน iOS และ iPadOS คือ `safari-mobile`
-- iPad คือ `ipados` ไม่ใช่ `ios`
+- iPad ส่วนใหญ่รายงาน `ipados` แต่ User-Agent จากบางแอปรายงาน `ios` ใช้ `isIPad()` หรือ `{ os: ['ios', 'ipados'] }` เพื่อครอบคลุมทั้งสองแบบ
 - `Version` เป็น object ไม่ใช่ string ให้ใช้ `atLeast()` หรืออ่าน `.major`
 - `is(info, {})` คืน `true` เสมอ ต้องระบุ key อย่างน้อยหนึ่งตัว
 - `detect()` ใช้ฝั่ง server ไม่ได้

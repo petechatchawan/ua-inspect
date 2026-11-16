@@ -18,6 +18,8 @@ if (is(info, { browser: 'chrome-mobile', os: 'android', device: 'mobile' })) {
 if (isBot(info)) return new Response(null, { status: 403 });
 ```
 
+Every snippet assumes its surrounding variables, such as `userAgent`, are already in scope. The compile-checked versions of the main examples live in [docs/examples](https://github.com/petechatchawan/ua-inspect/tree/master/docs/examples).
+
 ## Contents
 
 - [Installation](#installation)
@@ -749,7 +751,7 @@ See [Block bots in an Express middleware](#block-bots-in-an-express-middleware).
 Detection data lives in `src/catalog/`, one file per dimension, and rows are data, not code. A row cannot hold a regular expression, and ESLint rejects one in `src`. The id type, the `is()` query type, the Client Hints maps and `labels` all come from the rows.
 
 1. Add the row to the catalog file, for example `whale: { label: 'Naver Whale', family: 'chromium', engine: 'blink', brands: [], match: ['Whale'] }` in `src/catalog/browsers.ts`.
-2. Add a **real** captured string to `test/data/user-agents.json`: `{ "id": "whale-desktop", "ua": "Mozilla/5.0 (...)", "src": "observed:<where>@<date>", "expect": { "browser": { "name": "whale" } } }`. Nothing composed belongs there. A real string for one dimension goes in `test/data/<dimension>/<name>.json` instead (for example `browser/chrome.json`), with no `src`. Each file holds only the strings for that name. Both are read by the same runner, one row per case, and `note` explains any deliberate difference.
+2. Add a **real** captured string to `test/data/user-agents.json`: `{ "id": "whale-desktop", "ua": "Mozilla/5.0 (...)", "src": "observed:<where>@<date>", "expect": { "browser": { "name": "whale" } } }`. Nothing composed belongs there. A real string for one dimension goes in `test/data/<dimension>/<name>.json` instead (for example `browser/chrome.json`), with a `src` as well. Each file holds only the strings for that name. Both are read by the same runner, one row per case, and `note` explains any deliberate difference.
 3. Run `npm test`. The row's `beats` references must exist, every id needs a label, every entry in `user-agents.json` must name its capture in `src`, and the new string must parse as its `expect` says.
 
 See [CONTRIBUTING.md](https://github.com/petechatchawan/ua-inspect/blob/master/CONTRIBUTING.md) for the full checklist and the versioning policy.

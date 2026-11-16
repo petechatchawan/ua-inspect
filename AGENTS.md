@@ -45,7 +45,7 @@ npm_config_cache=/tmp/ua-inspect-npm-cache npm run check
 - No runtime dependencies. Dev dependencies are fine.
 - No regular expressions in `src`. ESLint enforces this. The scanner is linear and bounded.
 - Catalog rows are data. Put logic in `src/core` and test it there.
-- Fixtures are real captures. Do not compose a User-Agent string.
+- Fixtures are real captures. Every new `test/data` vector needs a `src` with an `observed:`, `vendor-doc:`, or `corpus:` prefix and an `@YYYY-MM-DD` date, and a composed string belongs in `test/unit`.
 - Reuse the existing precedence rule. Do not add per-dimension special cases unless the rule cannot express it.
 - Keep every public id stable. `test/unit/stable-ids.test.ts` fails when an id disappears.
 - Renaming or removing an id is a major release. Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing one.

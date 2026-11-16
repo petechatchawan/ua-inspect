@@ -198,9 +198,17 @@ There are two sets of stored strings:
 - `test/data/user-agents.json` holds this project's own captures. Every entry has a
   `src` of the form `observed:<where>@<date>`, and the test fails without it. 27 entries today.
 - `test/data/<dimension>/<name>.json` (dimensions `browser`, `context`, `cpu`, `device`, `engine`, `os`) hold
-  one real string per case and carry no `src`. Each file holds only one name, such as `browser/chrome.json`
+  one real string per case. Each file holds only one name, such as `browser/chrome.json`
   or `os/android.json`, and strings with no name go in that dimension's `unknown.json`. 110 entries today.
 - Nothing composed goes in: a made-up string proves nothing about a real client.
+
+Every new vector under `test/data` needs a `src` with one of three prefixes and an `@YYYY-MM-DD`
+date: `observed:<where>`, `vendor-doc:<url>`, or `corpus:<name>`. `user-agents.json` is stricter
+and accepts only `observed:`.
+
+The 110 per-dimension entries above predate that rule. `test/unit/user-agents.test.ts` holds their
+sorted ids as a snapshot, so the unproven set can only shrink: adding a vector without a `src`
+fails the test. A composed string belongs in `test/unit`, not in `test/data`.
 
 ## 7. Known limits
 
