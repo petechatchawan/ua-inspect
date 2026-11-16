@@ -37,6 +37,16 @@ npm_config_cache=/tmp/ua-inspect-npm-cache npm run check
 3. Run `npm test`. The catalog tests check `beats` references, cycles, duplicate brands and platforms, vendor prefix collisions, and labels.
 4. Run `npm run check`. It compares the README ids with the built catalog.
 
+## Required checks
+
+A pull request merges only when these CI jobs pass:
+
+- `test` on every supported Node.js version. Lint runs on Node 20 and later, and the test and typecheck steps run on Node 22 and later.
+- `detection-coverage`, which enforces the coverage thresholds.
+- `playground`, which installs the packed tarball and runs the type check, unit tests, build, and end-to-end smoke test.
+
+Enable branch protection for `master` with those job names marked required. The typecheck step is not optional: it is the only gate that compiles the type-level assertions under `test/unit` and the examples under `docs/examples`.
+
 ## Versioning
 
 The public contract includes the result shape, the stable ids, the entry points, and the exported helpers.
