@@ -42,7 +42,7 @@ const rows = {
         // The iOS build always sends `FBAN/FBIOS`, but only some builds send a version (`FBAV`).
         match: [
             { product: 'FBAV', fallback: true },
-            { product: 'FBAN', valueIs: ['FBIOS'], versionOptional: true },
+            { product: 'FBAN', productIs: ['FBIOS'], versionOptional: true },
         ],
     },
     instagram: { label: 'Instagram', type: 'in-app-browser', match: ['Instagram'] },
@@ -52,7 +52,11 @@ const rows = {
         type: 'in-app-browser',
         beats: ['facebook'],
         match: [
-            { product: 'FBAN', valueIs: ['MessengerForiOS', 'Orca-Android'], versionFrom: 'FBAV' },
+            {
+                product: 'FBAN',
+                productIs: ['MessengerForiOS', 'Orca-Android'],
+                versionFrom: 'FBAV',
+            },
         ],
     },
     tiktok: {
@@ -74,7 +78,7 @@ const rows = {
         type: 'in-app-browser',
         beats: ['tiktok'],
         ignores: TIKTOK_METADATA,
-        match: [{ product: 'AppName', valueIs: ['ultralite'], versionFrom: 'app_version' }],
+        match: [{ product: 'AppName', productIs: ['ultralite'], versionFrom: 'app_version' }],
     },
     twitter: {
         label: 'Twitter',

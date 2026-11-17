@@ -10,7 +10,8 @@ export type Signal<X = unknown> = {
     readonly product?: string;
     readonly words?: string;
     readonly skip?: number;
-    readonly valueIs?: readonly string[];
+    /** Filters a product signal by the product value. */
+    readonly productIs?: readonly string[];
     readonly with?: readonly string[];
     readonly without?: readonly string[];
     readonly os?: readonly string[];
@@ -69,6 +70,12 @@ export function compileMatcher<K extends string, X = unknown>(
             ) {
                 throw new Error(`Row ${id} needs exactly one of product or words.`);
             }
+            if (signal.skip !== undefined && signal.words === undefined)
+                throw new Error(`Row ${id} sets skip without words.`);
+            if (signal.productIs !== undefined && signal.product === undefined)
+                throw new Error(`Row ${id} sets productIs without a product.`);
+            if (signal.versionFrom !== undefined && signal.versionPrefer !== undefined)
+                throw new Error(`Row ${id} sets both versionFrom and versionPrefer.`);
             if (signal.words === undefined) {
                 const entries = index.get(key);
                 if (entries) entries.push({ id, signal });
@@ -113,11 +120,6 @@ export function compileMatcher<K extends string, X = unknown>(
         find(scanned, os) {
             const found: Candidate<K, X>[] = [];
             const accept = (id: K, signal: Signal<X>, versionRaw: string | null): void => {
-                if (
-                    signal.valueIs &&
-                    !signal.valueIs.some((value) => value.toLowerCase() === versionRaw)
-                )
-                    return;
                 const present = (name: string): boolean =>
                     scanned.names.has(name) || scanned.wordSet.has(name);
                 if (signal.with && !signal.with.every((name) => present(name.toLowerCase())))
@@ -155,15 +157,12 @@ export function compileMatcher<K extends string, X = unknown>(
 
             for (const product of index.size === 0 ? [] : scanned.products) {
                 for (const { id, signal } of index.get(product.name) ?? []) {
-                    if (signal.valueIs) {
-                        if (
-                            !signal.valueIs.some((value) => value.toLowerCase() === product.version)
-                        )
-                            continue;
-                        accept(id, signal, product.version);
-                    } else {
-                        accept(id, signal, product.version);
-                    }
+                    if (
+                        signal.productIs &&
+                        !signal.productIs.some((value) => value.toLowerCase() === product.version)
+                    )
+                        continue;
+                    accept(id, signal, product.version);
                 }
             }
 
