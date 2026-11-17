@@ -173,6 +173,22 @@ or long discontinued.
 A row is done when it is in the catalog and `npm test` passes. The catalog checks every `beats`
 reference, label, Client Hints brand, and vendor model prefix, so a broken row fails the build.
 
+A match signal uses these fields. `compileMatcher` validates the combinations when the catalog loads, so a
+contradictory row throws before any string is parsed.
+
+| Field              | Use                    | Rule                                                             |
+| ------------------ | ---------------------- | ---------------------------------------------------------------- |
+| `product`          | A `Name/Version` token | Exactly one of `product` or `words`                              |
+| `words`            | A run of words         | Exactly one of `product` or `words`                              |
+| `productIs`        | Product value filter   | Only with `product`                                              |
+| `skip`             | Version word offset    | Only with `words`                                                |
+| `versionFrom`      | Version source token   | A missing source fails the signal                                |
+| `versionPrefer`    | Preferred version      | A missing source falls back to the token; not with `versionFrom` |
+| `with` / `without` | Presence checks        | Product or word names                                            |
+| `os`               | OS gate                | OS ids                                                           |
+| `versionOptional`  | Allow no version       | Boolean                                                          |
+| `fallback`         | Generic identity       | Boolean                                                          |
+
 Reference strings live in the corpora under `test/data/` and are checked by `test/unit/user-agents.test.ts`.
 Adding one is a single entry in the matching file; the runner picks it up with no code change. Nothing
 composed goes in: a string that no client sent proves nothing about a real client.
@@ -230,6 +246,10 @@ path, whether the exception lives in code or in a catalog field.
 
 Try a catalog row field first. If code is required, add one named function with a test and a row in
 this table.
+
+`detect()` can fill a field from the User-Agent, Client Hints, or runtime evidence. The `UAInfo` shape
+does not name the source. This table and the known limits below list the cases where the source changes
+the answer, such as the iPad recovery and the hint merge.
 
 ## 8. Known limits
 

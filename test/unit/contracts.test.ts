@@ -47,6 +47,17 @@ describe('canonical contracts', () => {
         });
         expect(parse('Mozilla/5.0 Safari/17').browser.version).toBeNull();
     });
+
+    it('keeps browser tokens beside a crawler client', () => {
+        const info = parse(
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
+                '(KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36 ' +
+                '(compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+        );
+
+        expect(info.browser.name).toBe('chrome');
+        expect(info.client.type).toBe('crawler');
+    });
 });
 
 function assertClosedTypes(info: UAInfo): void {

@@ -26,8 +26,21 @@ Fixes OnePlus CPH detection and widens the model prefixes for five existing vend
 
 ## Unreleased
 
+### Fixed
+
+- `parseRequest()` and `readHeader()` return an empty result or `null` for a null or non-object input instead of throwing. TypeScript still rejects those values.
+- `atLeast()` returns `false` for a value that is not a `Version`. It previously threw a `TypeError`.
+
+### Changed
+
+- `is(info, {})` no longer compiles. The literal was always true, so no runtime result changes. JavaScript callers still get `true` and a development warning.
+- `is()` warns once in development when a query key is set to `undefined`, because that key does not filter.
+- `isBot()` narrows `client.type` to `bot`, `crawler`, or `ai-crawler`.
+
 ### Internal
 
+- Catalog rows use `productIs` instead of `valueIs`. `compileMatcher` rejects a row that sets `skip` without `words`, `productIs` without `product`, or both `versionFrom` and `versionPrefer`.
+- Document the bot browser tokens, the detection evidence sources, and the match row fields.
 - CI runs `npm run typecheck`, so the type-level assertions and the documented examples gate every pull request.
 - `npm run lint` covers `test` and `scripts`, not only `src`, and runs with type information.
 - The compiler enables `noUncheckedIndexedAccess`, `noFallthroughCasesInSwitch`, and `noImplicitReturns`. Every array read in the matcher and scanner that could be out of range is guarded.

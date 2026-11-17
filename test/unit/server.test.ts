@@ -1,8 +1,13 @@
-import { parseRequest, type HeaderRecord } from '../../src/server';
+import { parse } from '../../src/parse';
+import { parseRequest, readHeader, type HeaderRecord } from '../../src/server';
 
 const chromeUA =
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 ' +
     '(KHTML, like Gecko) Chrome/150.0.0.0 Safari/537.36';
+
+afterEach(() => {
+    vi.restoreAllMocks();
+});
 
 describe('parseRequest', () => {
     it('accepts a plain header record directly', () => {
@@ -122,5 +127,15 @@ describe('parseRequest', () => {
         const result = parseRequest({ 'user-agent': ['curl/8.4.0'] });
         expect(result.ua).toBe('curl/8.4.0');
         expect(result.client.name).toBe('curl');
+    });
+
+    it.each([null, undefined, 42])('returns the empty result for %p', (value) => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        expect(parseRequest(value as unknown as HeaderRecord)).toEqual(parse(''));
+        warn.mockRestore();
+    });
+
+    it('returns null headers for a null header source', () => {
+        expect(readHeader(null as unknown as HeaderRecord, 'user-agent')).toBeNull();
     });
 });

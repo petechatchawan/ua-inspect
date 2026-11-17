@@ -31,6 +31,8 @@ interface UAInfo {
 
 A field is `null` when the evidence does not name it. There is no `"unknown"` sentinel.
 
+`browser` describes the tokens in the string, not the visitor. A crawler can carry Chrome tokens, so check `client.type` or `isBot()` before you treat a result as a person.
+
 ```ts
 interface Version {
     full: string;
@@ -64,7 +66,7 @@ type ParseRequestInput = HeaderSource | { headers: HeaderSource; userAgent?: str
 function parseRequest(input: ParseRequestInput): UAInfo;
 ```
 
-Reads the User-Agent and the `Sec-CH-UA-*` headers that are present. It accepts a `Request`, a `Headers` object, or a plain header record. It does not emit `Accept-CH` or manage caching. Header values that are not strings or string arrays are treated as missing. An array joins with `, `.
+Reads the User-Agent and the `Sec-CH-UA-*` headers that are present. It accepts a `Request`, a `Headers` object, or a plain header record. A null or non-object input returns the empty result. It does not emit `Accept-CH` or manage caching. Header values that are not strings or string arrays are treated as missing. An array joins with `, `.
 
 ### `detect(options?)`
 
@@ -83,6 +85,8 @@ function detect(options?: DetectOptions): Promise<UAInfo>;
 
 Reads the current browser from `navigator.userAgent`, the low-entropy Client Hints, and the runtime touch signals that recover an iPad in desktop mode.
 
+The result can combine three evidence sources: the User-Agent, Client Hints, and runtime signals. The shape does not name the source for a field. The post-resolution overrides and known limits in [coverage.md](coverage.md) list the cases that change the answer.
+
 `highEntropy: true` requests exactly `architecture`, `bitness`, `fullVersionList`, `model`, and `platformVersion`. It throws outside a browser window or worker. Node.js 21 and later define `navigator` but not `document`, so it still throws on the server.
 
 ## Queries
@@ -90,10 +94,13 @@ Reads the current browser from `navigator.userAgent`, the low-entropy Client Hin
 ### `is(info, query)`
 
 ```ts
-function is<Q extends Query>(info: UAInfo, query: Q): info is UAInfo & Narrowed<Q>;
+function is<Q extends Query>(
+    info: UAInfo,
+    query: keyof Q extends never ? never : Q,
+): info is UAInfo & Narrowed<Q>;
 ```
 
-Keys combine with AND. The values of one key combine with OR. An unknown id never matches. At runtime, an unknown query key is ignored and warns in Node.js development. A query widened to `Query` does not narrow fields that it does not name.
+Keys combine with AND. The values of one key combine with OR. An unknown id never matches. At runtime, an unknown query key is ignored and warns in Node.js development. A query widened to `Query` does not narrow fields that it does not name. An empty object literal is rejected at compile time. A key whose value is `undefined` matches everything and warns in development.
 
 | Key           | Values                                                     |
 | ------------- | ---------------------------------------------------------- |
@@ -110,7 +117,7 @@ Keys combine with AND. The values of one key combine with OR. An unknown id neve
 | `contextType` | `ContextType`                                              |
 | `app`         | `AppId`                                                    |
 
-In Node.js development, `is()` warns once for an unknown key and once for an empty query. The return value does not change, and production is silent.
+In Node.js development, `is()` warns once for an unknown key, once for an empty query, and once for a key whose value is `undefined`. The return value does not change, and production is silent.
 
 ### `atLeast(version, minimum)`
 
@@ -118,13 +125,13 @@ In Node.js development, `is()` warns once for an unknown key and once for an emp
 function atLeast(version: Version | null, minimum: string): boolean;
 ```
 
-Compares segment by segment. Missing segments count as zero. A null version or a malformed minimum returns `false`.
+Compares segment by segment. Missing segments count as zero. A null version, a malformed minimum, or a value that is not a `Version` returns `false`.
 
 ## Predicates
 
 | Function          | True when                                          | Narrows        |
 | ----------------- | -------------------------------------------------- | -------------- |
-| `isBot(info)`     | `client.type` is `bot`, `crawler`, or `ai-crawler` | no             |
+| `isBot(info)`     | `client.type` is `bot`, `crawler`, or `ai-crawler` | `client.type`  |
 | `isMobile(info)`  | `device.type` is `mobile`                          | `device.type`  |
 | `isTablet(info)`  | `device.type` is `tablet`                          | `device.type`  |
 | `isDesktop(info)` | `device.type` is `desktop`                         | `device.type`  |

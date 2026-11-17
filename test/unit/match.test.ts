@@ -93,6 +93,31 @@ describe('matcher', () => {
 
         expect(rows.find(scan('musical_ly_34.3.1'), null)).toEqual([]);
     });
+
+    it('filters a product signal by the product value', () => {
+        const rows = compileMatcher<'facebook', unknown>({
+            facebook: {
+                match: [{ product: 'FBAN', productIs: ['FBIOS'], versionOptional: true }],
+            },
+        });
+
+        expect(rows.find(scan('FBAN/FBIOS'), null)).toMatchObject([{ id: 'facebook' }]);
+        expect(rows.find(scan('FBAN/OTHER'), null)).toEqual([]);
+    });
+
+    it('rejects a row whose fields contradict its signal', () => {
+        expect(() =>
+            compileMatcher<'a', unknown>({ a: { match: [{ product: 'A', skip: 1 }] } }),
+        ).toThrow('skip without words');
+        expect(() =>
+            compileMatcher<'a', unknown>({ a: { match: [{ words: 'a', productIs: ['A'] }] } }),
+        ).toThrow('productIs without a product');
+        expect(() =>
+            compileMatcher<'a', unknown>({
+                a: { match: [{ product: 'A', versionFrom: 'x', versionPrefer: 'y' }] },
+            }),
+        ).toThrow('both versionFrom and versionPrefer');
+    });
 });
 
 describe('pick', () => {

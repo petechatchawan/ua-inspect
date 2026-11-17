@@ -8,6 +8,7 @@ import {
     isMobile,
     isTablet,
     isWebView,
+    type Query,
 } from '../../src/check';
 import { resolve } from '../../src/core/resolve';
 import { parse } from '../../src/parse';
@@ -69,6 +70,13 @@ function assertTypes(info: UAInfo): void {
 }
 void assertTypes;
 
+// Compile-time contract. An empty object literal would match everything, so it is rejected.
+function assertEmptyQueryRejected(info: UAInfo): void {
+    // @ts-expect-error an empty query matches everything
+    is(info, {});
+}
+void assertEmptyQueryRejected;
+
 describe('is', () => {
     it('matches every key of the query', () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
@@ -76,7 +84,7 @@ describe('is', () => {
             is(chromeAndroid, { browser: 'chrome-mobile', os: 'android', device: 'mobile' }),
         ).toBe(true);
         expect(is(chromeAndroid, { browser: 'chrome-mobile', os: 'ios' })).toBe(false);
-        expect(is(chromeAndroid, {})).toBe(true);
+        expect(is(chromeAndroid, {} as Query)).toBe(true);
         expect(warn).toHaveBeenCalledWith(expect.stringContaining('empty query'));
         warn.mockRestore();
     });
@@ -204,5 +212,15 @@ describe('isBot', () => {
         expect(isBot(chatgptUser)).toBe(false);
         expect(isBot(curl)).toBe(false);
         expect(isBot(chromeAndroid)).toBe(false);
+    });
+
+    it('narrows the client type', () => {
+        if (isBot(googlebot)) {
+            const type: 'bot' | 'crawler' | 'ai-crawler' = googlebot.client.type;
+            void type;
+            // @ts-expect-error an assistant is not a bot
+            const wrong: 'ai-assistant' = googlebot.client.type;
+            void wrong;
+        }
     });
 });

@@ -1,5 +1,6 @@
 import { decodeClientHints } from './client-hints';
 import { resolve } from './core/resolve';
+import { warnOnce } from './dev';
 import type { UAInfo } from './types';
 
 export type HeaderValue = string | readonly string[] | undefined;
@@ -27,6 +28,7 @@ function readHeaderValue(value: unknown): string | null {
 
 /** Reads one header from a header record or a `Headers`-like object. A string array joins with `, `. */
 export function readHeader(headers: HeaderSource, name: string): string | null {
+    if (headers === null || typeof headers !== 'object') return null;
     if (typeof (headers as HeaderGetter).get === 'function') {
         return readHeaderValue((headers as HeaderGetter).get(name));
     }
@@ -48,6 +50,7 @@ function isRequestLikeInput(input: ParseRequestInput): input is RequestLikeInput
  * Parses a request's User-Agent and the `Sec-CH-UA-*` headers that are present.
  *
  * It accepts a `Request`-like object, a `Headers`-like object, or a plain header record.
+ * A null or non-object input returns the empty result; TypeScript rejects those values.
  * It does not emit `Accept-CH`, manage cache headers, or negotiate Client Hints.
  *
  * @example
@@ -59,6 +62,13 @@ function isRequestLikeInput(input: ParseRequestInput): input is RequestLikeInput
  * });
  */
 export function parseRequest(input: ParseRequestInput): UAInfo {
+    if (input === null || typeof input !== 'object') {
+        warnOnce(
+            'parseRequest:non-object',
+            `parseRequest(): expected a request or a header record; received ${typeof input}.`,
+        );
+        return resolve('', null, null);
+    }
     const requestLike = isRequestLikeInput(input) ? input : { headers: input };
     const read = (name: string) => readHeader(requestLike.headers, name);
     const ua = requestLike.userAgent ?? read('user-agent') ?? '';
