@@ -42,7 +42,7 @@ if (atLeast(info.browser.version, '130')) {
 }
 ```
 
-`is()` ใช้ key ที่พิมพ์ผิดไม่ได้ถ้าเป็น TypeScript และใน development จะมี warning ถ้าใส่ key ที่ไม่รู้จักหรือ query ว่าง
+`is()` ใช้ key ที่พิมพ์ผิดไม่ได้ถ้าเป็น TypeScript และใน development จะมี warning ถ้าใส่ key ที่ไม่รู้จัก, query ว่าง, หรือ key ที่มีค่า `undefined`
 
 ## แสดงผลให้คนอ่าน
 
@@ -100,8 +100,9 @@ adapter ต้องการแค่ `isInClient(): boolean` ถ้าไม�
 - Chrome บนมือถือคือ `chrome-mobile` ไม่ใช่ `chrome`
 - Safari บน iOS และ iPadOS คือ `safari-mobile`
 - iPad ส่วนใหญ่รายงาน `ipados` แต่ User-Agent จากบางแอปรายงาน `ios` ใช้ `isIPad()` หรือ `{ os: ['ios', 'ipados'] }` เพื่อครอบคลุมทั้งสองแบบ
-- `Version` เป็น object ไม่ใช่ string ให้ใช้ `atLeast()` หรืออ่าน `.major`
-- `is(info, {})` คืน `true` เสมอ ต้องระบุ key อย่างน้อยหนึ่งตัว
+- `Version` เป็น object ไม่ใช่ string ให้ใช้ `atLeast()` หรืออ่าน `.major` ถ้าค่าไม่ใช่ `Version` จะได้ `false`
+- `is(info, {})` ใช้ไม่ได้ใน TypeScript แล้ว ส่วน JavaScript ยังคืน `true` และมี warning ให้ระบุ key อย่างน้อยหนึ่งตัว
+- `browser` อาจมีค่าบน bot ได้ เพราะเป็น token ที่ string อ้าง ไม่ใช่ตัวผู้ใช้ ให้เช็ค `client.type` หรือ `isBot()` ก่อน
 - `detect()` ใช้ฝั่ง server ไม่ได้
 - `parse(request)` จะได้ผลว่าง ให้ใช้ `parseRequest(request)`
 

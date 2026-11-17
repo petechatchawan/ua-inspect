@@ -111,7 +111,7 @@ import { parseRequest } from 'ua-inspect/server';
 const info = parseRequest(request);
 ```
 
-`parseRequest()` accepts a Request-like object, a `Headers`-like object, or a plain header record:
+`parseRequest()` accepts a Request-like object, a `Headers`-like object, or a plain header record. A null or non-object input returns the empty result; TypeScript rejects those values.
 
 ```ts
 const info = parseRequest({
@@ -141,6 +141,8 @@ const info = await detect({ highEntropy: true });
 The high-entropy opt-in requests exactly `architecture`, `bitness`, `fullVersionList`, `model` and `platformVersion`.
 
 `detect()` also reads `platform` and `maxTouchPoints`. Safari sends no Client Hints, so this is the only way to spot an iPad in desktop mode, which sends a Macintosh User-Agent. A Mac reports no touch points, so a desktop Mac is never turned into an iPad.
+
+`detect()` can fill a field from the User-Agent, Client Hints, or runtime evidence. The result does not name the source. The post-resolution overrides and known limits in [docs/coverage.md](https://github.com/petechatchawan/ua-inspect/blob/master/docs/coverage.md) list the cases that change the answer.
 
 `detect()` throws outside a browser window or worker. This includes Node.js 21 and later, which define `navigator`. Use `parse()` or `parseRequest()` during SSR or other non-browser execution.
 
@@ -233,6 +235,8 @@ The parser does not invent a family to fill a field. A Chromium fork that has no
 `device.model` is the raw string the device reported. It is never normalized or invented, and placeholders such as `K` are not models.
 
 `client.name` is a listed client id, or `null` for a bot that no row lists. `client.token` is the lowercased product name from the User-Agent, so an unlisted bot still has a name to log.
+
+`browser` describes the tokens in the string, not the visitor. A crawler can carry Chrome tokens, so a result can report `browser.name: 'chrome'` with `client.type: 'crawler'`. Check the client dimension or `isBot()` before you treat a result as a person's browser.
 
 `context.name` is what the page runs as and `context.app` is the native app that hosts it. They differ only for a mini-app: LIFF has `name: 'liff'` and `app: 'line'`.
 
@@ -370,7 +374,7 @@ if (isInApp(info)) {
 }
 ```
 
-`isBot(info)` is true for the client types `bot`, `crawler` and `ai-crawler`. The types are:
+`isBot(info)` is true for the client types `bot`, `crawler` and `ai-crawler`, and it narrows `client.type` to those three. The types are:
 
 | Type                           | Meaning                                                  |
 | ------------------------------ | -------------------------------------------------------- |
@@ -471,22 +475,24 @@ if (atLeast(info.browser.version, '130')) {
 }
 ```
 
+A value that is not a `Version` returns `false`.
+
 ## Common mistakes
 
-| Mistake                                      | What happens                                | Do this                                                 |
-| -------------------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
-| `is(info, { browser: 'chrome' })` on a phone | `false` since 1.1.0                         | `chrome-mobile`, both ids, or `family: 'chromium'`      |
-| `is(info, { os: 'ios' })` on an iPad         | `false`, because iPadOS is its own id       | `['ios', 'ipados']` or `isIPad(info)`                   |
-| `is(info, {})`                               | Always `true`                               | Name at least one key                                   |
-| `is(info, { browser: 'Chrome' })`            | Always `false`                              | Ids are lowercase                                       |
-| `is(info, { brower: 'chrome' })`             | `true`, and a development warning since 1.2 | Fix the key. TypeScript rejects it on an object literal |
-| `info.browser.version > 120`                 | Always `false`                              | `atLeast(info.browser.version, '120')`                  |
-| `` `${info.browser.version}` `` before 1.2   | `[object Object]`                           | `info.browser.version?.full`, or upgrade                |
-| `labels.browser[info.browser.name]`          | `undefined` when no browser is known        | Guard the id, as the examples do                        |
-| `parse(request)`                             | Every field is `null`                       | `parseRequest(request)`                                 |
-| `detect()` during SSR                        | Throws                                      | `parse()` or `parseRequest()`                           |
+| Mistake                                      | What happens                                                           | Do this                                                 |
+| -------------------------------------------- | ---------------------------------------------------------------------- | ------------------------------------------------------- |
+| `is(info, { browser: 'chrome' })` on a phone | `false` since 1.1.0                                                    | `chrome-mobile`, both ids, or `family: 'chromium'`      |
+| `is(info, { os: 'ios' })` on an iPad         | `false`, because iPadOS is its own id                                  | `['ios', 'ipados']` or `isIPad(info)`                   |
+| `is(info, {})`                               | Always `true` in JavaScript; the TypeScript literal no longer compiles | Name at least one key                                   |
+| `is(info, { browser: 'Chrome' })`            | Always `false`                                                         | Ids are lowercase                                       |
+| `is(info, { brower: 'chrome' })`             | `true`, and a development warning since 1.2                            | Fix the key. TypeScript rejects it on an object literal |
+| `info.browser.version > 120`                 | Always `false`                                                         | `atLeast(info.browser.version, '120')`                  |
+| `` `${info.browser.version}` `` before 1.2   | `[object Object]`                                                      | `info.browser.version?.full`, or upgrade                |
+| `labels.browser[info.browser.name]`          | `undefined` when no browser is known                                   | Guard the id, as the examples do                        |
+| `parse(request)`                             | Every field is `null`                                                  | `parseRequest(request)`                                 |
+| `detect()` during SSR                        | Throws                                                                 | `parse()` or `parseRequest()`                           |
 
-In development, `is()` warns once per unknown query key and once for an empty query. The return value does not change, and production builds are silent.
+In development, `is()` warns once per unknown query key, once for an empty query, and once for a key whose value is `undefined`. The return value does not change, and production builds are silent.
 
 ## LINE and LIFF
 
@@ -581,11 +587,11 @@ Then forward the request headers to `parseRequest()`.
 
 ### `parseRequest()` returns an empty result
 
-Check that the header source is a `Request`, a `Headers` object, or a plain record with lowercased or mixed-case keys. A `user-agent` header is optional; an absent one yields empty fields, not an error.
+Check that the header source is a `Request`, a `Headers` object, or a plain record with lowercased or mixed-case keys. A null or non-object source returns the empty result. A `user-agent` header is optional; an absent one yields empty fields, not an error.
 
 ### `is()` matches everything or nothing
 
-An empty query is always true, and a misspelled key is ignored. From 1.2, development builds warn once for both. In production, add a test with a known `UAInfo` and a literal query.
+An empty query is always true in JavaScript, and the literal no longer compiles in TypeScript. A misspelled key is ignored, and a key whose value is `undefined` does not filter. Development builds warn once for each case. In production, add a test with a known `UAInfo` and a literal query.
 
 ## CommonJS
 
