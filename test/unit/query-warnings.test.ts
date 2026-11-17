@@ -36,4 +36,14 @@ describe('is query warnings', () => {
 
         expect(warn).not.toHaveBeenCalled();
     });
+
+    it('warns once about an undefined value', () => {
+        const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        is(info, { browser: undefined });
+        is(info, { browser: undefined });
+
+        expect(warn).toHaveBeenCalledTimes(1);
+        expect(warn).toHaveBeenCalledWith(expect.stringContaining('undefined'));
+    });
 });

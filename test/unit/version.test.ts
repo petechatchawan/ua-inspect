@@ -1,6 +1,7 @@
 import { atLeast } from '../../src/check';
 import { readVersion } from '../../src/core/scan';
 import { parse } from '../../src/parse';
+import type { Version } from '../../src/types';
 
 describe('Version', () => {
     it('stringifies as the dotted version', () => {
@@ -48,6 +49,11 @@ describe('atLeast', () => {
 
     it('rejects a null version', () => {
         expect(atLeast(null, '150')).toBe(false);
+    });
+
+    it('rejects a value that is not a Version object', () => {
+        expect(atLeast('130' as unknown as Version, '120')).toBe(false);
+        expect(atLeast({} as Version, '120')).toBe(false);
     });
 
     it.each(['', 'nope', 'v150', '150abc', '150.', '150..1'])(

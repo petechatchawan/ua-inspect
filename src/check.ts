@@ -4,7 +4,6 @@ import type {
     BrowserId,
     BrowserMode,
     ClientId,
-    ClientInfo,
     ClientType,
     ContextId,
     ContextType,
@@ -111,9 +110,12 @@ function warnAboutQuery(query: Query): void {
         warnOnce('empty-query', 'is(): an empty query always returns true.');
         return;
     }
-    for (const key of keys) {
-        if (!QUERY_KEYS.has(key))
+    for (const [key, value] of Object.entries(query)) {
+        if (!QUERY_KEYS.has(key)) {
             warnOnce(`unknown-key:${key}`, `is(): unknown query key "${key}".`);
+        } else if (value === undefined) {
+            warnOnce(`undefined-key:${key}`, `is(): query key "${key}" is undefined.`);
+        }
     }
 }
 
@@ -126,7 +128,10 @@ function warnAboutQuery(query: Query): void {
  *     info.browser.name; // 'chrome' | 'edge'
  * }
  */
-export function is<Q extends Query>(info: UAInfo, query: Q): info is UAInfo & Narrowed<Q> {
+export function is<Q extends Query>(
+    info: UAInfo,
+    query: keyof Q extends never ? never : Q,
+): info is UAInfo & Narrowed<Q> {
     if (IS_DEVELOPMENT) warnAboutQuery(query);
     return (
         matches(info.browser.name, query.browser) &&
@@ -179,6 +184,7 @@ function readMinimum(minimum: string): Version | null {
 export function atLeast(version: Version | null, minimum: string): boolean {
     const target = readMinimum(minimum);
     if (version === null || target === null) return false;
+    if (typeof version !== 'object' || typeof version.full !== 'string') return false;
     const left = versionSegments(version);
     const right = versionSegments(target);
     const length = Math.max(left.length, right.length);
@@ -190,11 +196,16 @@ export function atLeast(version: Version | null, minimum: string): boolean {
     return true;
 }
 
-const BOT_TYPES: readonly ClientInfo['type'][] = ['bot', 'crawler', 'ai-crawler'];
+type BotType = 'bot' | 'crawler' | 'ai-crawler';
+type BotInfo = UAInfo & { readonly client: { readonly type: BotType } };
+const BOT_TYPES: readonly BotType[] = ['bot', 'crawler', 'ai-crawler'];
 
-/** True for the client types that fetch pages on their own: `bot`, `crawler` and `ai-crawler`. */
-export function isBot(info: UAInfo): boolean {
-    return BOT_TYPES.includes(info.client.type);
+/**
+ * True for the client types that fetch pages on their own: `bot`, `crawler` and `ai-crawler`.
+ * Narrows `client.type` to those three.
+ */
+export function isBot(info: UAInfo): info is BotInfo {
+    return BOT_TYPES.includes(info.client.type as BotType);
 }
 
 type NarrowDevice<T extends DeviceType> = UAInfo & { readonly device: { readonly type: T } };
